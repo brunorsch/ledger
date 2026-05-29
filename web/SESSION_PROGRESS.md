@@ -239,3 +239,278 @@ Data: 2026-05-12
   - Documento agora cobre camadas, fluxo de dados, CRUD compartilhado, factories, soft-delete, estilos, gates, hooks/Husky, warnings conhecidos e ressalvas antes do lancamento.
   - Adicionada secao explicita `Regras Obrigatorias para IA`, mantendo as convencoes existentes e tornando os pontos bloqueantes mais visiveis para futuras sessoes.
   - `git diff --check -- ARCHITECTURE.md`: passou.
+- Roadmap UI Pos-V1 iniciado na branch `feat/new-layout`:
+  - Criado/atualizado `roadmap-ui-pos-v1.md` para guiar o polimento visual pos-V1.
+  - Primeira passada implementada em Header/Faturas, Acoes Globais e Tabs.
+  - `ExportButton` saiu do bloco solto entre header e tabs e agora entra em `MonthNav` via `headerActions`.
+  - `MonthNav` ganhou area `.month-nav-actions` para exportacao e tema.
+  - Header/tabs foram compactados; tabs receberam estilo mais leve e indicador ativo menos pesado.
+  - Painel de faturas ficou mais compacto; cards alinham a esquerda, com largura/min-height ajustados para reduzir area vazia.
+  - `roadmap-ui-pos-v1.md` marcou como feitos os passos 1.1-1.4, 2.1-2.3 e 3.1-3.3.
+  - Validado com Prettier nos arquivos alterados, ESLint, `tsc --noEmit --pretty false`, `git diff --check`, `npm test` (221 testes) e `npm run build`.
+  - Observacao: `npm test`/`npm run build` passaram via Git Bash com permissao elevada apos `.cmd` falhar no sandbox com `spawn EPERM`; warnings conhecidos do Vite/plugin React persistem sem quebrar build.
+  - Segunda passada aplicada em KPIs principais, faturas no resumo, graficos e KPIs inferiores.
+  - `Summary.tsx` removeu estilos inline dos cards de fatura e criou classes para header/linhas de detalhe.
+  - `saldo.css` reforcou hierarquia do saldo previsto e organizou Receitas/Pago/A pagar em pares alinhados.
+  - `metrics.css` adicionou `mcard--summary`, `bill-summary-card` e `metrics--support` para consistencia dos cards.
+  - `chartTheme.ts` centralizou cores/fontes de eixos e grades usadas por configs Chart.js.
+  - `charts-layout.css` aumentou respiro dos cards de grafico e deixou titulos/switches mais legiveis.
+  - `roadmap-ui-pos-v1.md` marcou como feitos os passos 4.1-4.4, 5.1-5.3, 6.1-6.4 e 7.1-7.3.
+  - Fase 8 aplicada:
+    - Adicionado token `--layout-gap-lg: 24px`.
+    - Header, conteudo, MonthNav, cards de resumo e charts passaram a usar os tokens `8/12/16/24` nos espacamentos principais.
+    - Corrigido typo de token `--color-semantic-waning` para `--color-semantic-warning`, que ja era referenciado por `.warn`, progressos e alertas.
+    - `roadmap-ui-pos-v1.md` marcou como feitos os passos 8.1-8.4.
+    - `ARCHITECTURE.md` atualizado com `chartTheme.ts` e a escala de gaps `8/12/16/24`.
+- Fechamento do Roadmap UI Pos-V1:
+  - Adicionada diretriz de experiencia ao roadmap: transformar ansiedade em clareza, priorizando sensacao de organizacao em vez de contabilidade.
+  - Criado `src/features/finance/tests/Summary.test.tsx` cobrindo fatura paga, pendente, sem valor e valor alto no resumo.
+  - Criado `src/features/finance/tests/chartConfigs.test.ts` cobrindo modos de grafico `categories`, `cards`, `cardsStatus` e o grafico de parcelamentos.
+  - Roadmap marcou como feitos os passos 1.5, 2.4, 3.4, 5.4, 6.5, 7.4, 9.1, 9.2, 9.4, 9.5 e 9.6.
+  - Passo 9.3 ficou marcado como limitado: ambiente sem captura de browser estavel; antes do merge/release, recomenda-se apenas aprovacao visual manual rapida.
+- Revisao do Roadmap UI Pos-V1:
+  - Confirmado que as fases de implementacao estao refletidas em codigo, estilos e testes.
+  - Ajustado o status da Fase 0.1 para `[limitado]`, porque nao ha screenshot de baseline salvo no projeto; os estados ficaram cobertos por testes/gates e a aprovacao visual final deve ser manual.
+  - Ajustados os passos 9.4 e 9.5 para `[limitado]`, pois validacao desktop/mobile completa depende de browser visual real.
+- Planejamento de Clareza Financeira:
+  - Criado `roadmap-ui-clareza-financeira.md` com base no layout atual apos as alteracoes.
+  - Roadmap foca em transformar ansiedade em clareza: estado do mes, hierarquia de numeros, faturas mais calmas, linguagem dos KPIs, graficos como apoio e alertas orientativos.
+  - Escopo mantem regras financeiras intactas; mudancas previstas sao de apresentacao, microcopy, hierarquia e validacao visual.
+- Roadmap UI Clareza Financeira iniciado:
+  - Fase 1 concluida.
+  - `Summary.tsx` ganhou helper local de status do mes (`comfortable`, `tight`, `negative`).
+  - O topo do saldo agora mostra uma frase curta de contexto para mes confortavel, apertado ou negativo.
+  - Alerta negativo deixou de repetir o valor do saldo e passou a orientar revisao de despesas/faturas.
+  - `saldo.css` e `alerts.css` suavizam o tom visual do estado negativo sem remover contraste.
+  - `Summary.test.tsx` cobre os tres estados de apresentacao.
+  - Fase 2 concluida.
+  - `Summary.tsx` ganhou `getExpenseRatioCopy` para trocar percentuais extremos por textos mais humanos (`quase toda a receita`, `acima da receita do mes`, `sem receita cadastrada`).
+  - Cards de `Receitas` e `Despesas` ganharam classe `summary-support`, com peso visual reduzido em `metrics.css`.
+  - `Summary.test.tsx` cobre relacao de despesas saudavel, alta, acima da receita e sem receita cadastrada.
+  - Fase 3 concluida.
+  - Badges de fatura no resumo perderam os simbolos, ficando como status textual simples (`Paga`/`Pendente`).
+  - `Abatimento` agora fica oculto quando for `R$ 0,00`.
+  - `Restante para pagar` foi encurtado para `Restante`.
+  - Fatura sem valor mostra `Sem fatura lancada` em vez de competir como `R$ 0,00`.
+  - `bill-pay-btn.unpaid` ficou visualmente mais neutro em `metrics.css`.
+  - Fase 4 concluida.
+  - `useSummaryMetrics` troca `DISTRIBUICAO DE DESPESAS` por `PARA ONDE O DINHEIRO VAI`.
+  - `SummaryDashboard.tsx` troca `PARCELAMENTOS` por `PARCELAS EM ABERTO`, `TOTAL/MES` por `PARCELAS DESTE MES`, `TOTAL RESTANTE` por `PARCELAS FUTURAS` e `QUASE NO FIM` por `PERTO DE QUITAR`.
+  - Criado `SummaryDashboard.test.tsx` para travar a nova linguagem dos graficos e KPIs de apoio.
+  - Fase 5 concluida.
+  - `charts-layout.css` reduziu peso visual dos cards de grafico, diminuiu alturas e suavizou titulos/switches.
+  - `useSummaryMetrics` troca `DESPESAS POR CARTAO` por `GASTOS POR CARTAO` e `PAGO X PENDENTE (RASTREADO)` por `PAGO E PENDENTE`.
+  - `SummaryDashboard.test.tsx` cobre os tres titulos de modo do grafico principal.
+  - Fase 6 concluida.
+    - Tokens `--color-alert-guidance-bg` e `--color-alert-guidance-border` adicionados para temas default e premium.
+    - `alert-bar--guidance` agora usa tokens dedicados em vez de misturas ad hoc.
+    - `Summary.test.tsx` valida que o alerta negativo usa texto orientativo e classe de guidance.
+  - Fase 7 concluida.
+    - `roadmap-ui-clareza-financeira.md` encerrado para implementacao em codigo.
+    - `ARCHITECTURE.md` atualizado com tokens de alerta orientativo e diretriz de microcopy para resumo.
+    - Validacao manual desktop/mobile ficou marcada como limitada por depender de browser visual real.
+- Polimento pos-revisao visual do Roadmap UI Clareza Financeira:
+  - Rosca com uma unica categoria ficou menos dominante e ganhou leitura auxiliar `Principal foco`, mantendo o grafico como apoio.
+  - Grafico de parcelas com poucos itens muito concentrados ganhou uma frase de interpretacao rapida antes do canvas.
+  - Cards de fatura no topo tiveram gradiente e sombra suavizados para competir menos com o saldo previsto.
+  - Card de despesas acima da receita agora exibe orientacao pratica: `Priorize faturas e gastos recorrentes.`
+  - Cobertura ajustada em `Summary.test.tsx` e `SummaryDashboard.test.tsx`.
+  - Validado com Prettier nos arquivos alterados, ESLint, `npm test` (229 testes), `npm run build`, `tsc --noEmit --pretty false` e `git diff --check`.
+  - Observacao: `npm test` e `npm run build` precisaram rodar via Git Bash com permissao elevada por `spawn EPERM`/erro de pipe no sandbox; warnings conhecidos do Vite/plugin React persistem sem quebrar os gates.
+- Correcao do polimento apos revisao em tela:
+  - A rosca com unica categoria deixou de renderizar canvas para evitar o oval espremido; agora usa um estado textual de insight.
+  - Parcelas em aberto com ate 3 itens deixaram de usar barras Chart.js e viraram lista compacta com mini trilhos discretos.
+  - Grafico de barras permanece reservado para cenarios com mais volume de itens, onde a comparacao visual faz mais sentido.
+  - Revalidado com Prettier, ESLint, `tsc --noEmit --pretty false`, `git diff --check`, `npm test` (229 testes) e `npm run build`.
+- Terceira versao dos blocos de pouco dado:
+  - Categoria unica passou a mostrar `100%`, foco, valor e uma frase de revisao de categoria, em formato compacto.
+  - Ate 3 parcelas abertas agora mostram total em aberto, quantidade e linhas com mini trilhos, evitando o vazio de um canvas pobre.
+  - `chart-card--compact` diferencia esses estados de insight dos cards de grafico completos.
+  - `SummaryDashboard.test.tsx` atualizado para cobrir os novos textos de insight.
+  - Validado com Prettier, ESLint, `tsc --noEmit --pretty false`, `git diff --check`, `npm test` (229 testes) e `npm run build`.
+- Planejamento de migracao visual inspirado no FinFlow:
+  - Analisado `finflow/finflow`, app Next/Tailwind separado com dados mockados.
+  - Confirmado que o FinFlow deve ser usado como referencia de layout, nao como fonte de regras, estado ou arquitetura.
+  - Criado `roadmap-finflow-layout.md` com fases para migrar moldura global, faturas, tabs, resumo, graficos, CRUDs e modais sem quebrar a V1.
+  - Plano prioriza tokens/surfaces, topbar, tabs e faturas antes de mexer em CRUD compartilhado.
+- Migracao visual FinFlow iniciada:
+  - Tokens de tema em `tokens.css` receberam paleta mais proxima do FinFlow: canvas escuro premium, superficies elevadas, verde como accent, aliases de border e sombras.
+  - `FinanceApp.tsx` ganhou topbar sticky com marca, mes centralizado e acoes globais; `MonthNav` ficou como area de faturas.
+  - `AppTabs` foi reestilizado via `app.css` como segmented control com ativo verde.
+  - Area de faturas e cards de cartao foram ampliados e receberam surface/elevation mais premium sem alterar regras de fatura.
+  - Saldo previsto, cards de resumo e cards de graficos ganharam hierarchy/elevation mais proximas do FinFlow.
+  - `roadmap-finflow-layout.md` atualizado com a primeira leva: fases 0, 1 e 3 feitas; fase 2 parcial; inicio das fases 4 e 5.
+  - Validado com Prettier, ESLint, `tsc --noEmit --pretty false`, `git diff --check`, `npm test` (229 testes) e `npm run build`.
+- Migracao visual FinFlow em Parcelamentos:
+  - `InstallmentsSection` deixou de renderizar a tabela generica para usar cards de progresso inspirados no FinFlow.
+  - Cada parcelamento mostra nome, cartao, mes inicial, valor mensal, parcela atual/total, progresso, valor ja pago e badge `Perto de quitar` quando >= 75%.
+  - Modais de criacao/edicao, confirmacao de delete, soft-delete e toggle de pago no mes continuam usando os mesmos hooks/acoes atuais.
+  - Estado vazio ganhou surface propria.
+  - `roadmap-finflow-layout.md` marcou Fase 7 como feita, com cobertura visual de cenarios ainda parcial.
+  - Validado com Prettier, ESLint, `tsc --noEmit --pretty false`, `git diff --check`, `npm test` (229 testes) e `npm run build`.
+- Migracao visual FinFlow em tabelas e Receitas:
+  - `RuleSection` passou a usar `rule-table-card` e empty state sem inline style.
+  - Tabelas compartilhadas ganharam surface/elevation, header mais forte, linhas mais altas, hover mais discreto e acoes de linha menos ruidosas.
+  - Inputs de override mensal ficaram mais premium, com foco/accent alinhado aos tokens FinFlow.
+  - `RevenuesSection` ganhou resumo superior seguro com total do mes e quantidade de lancamentos ativos, sem inventar status recebido/previsto.
+  - Fase 6 marcada como parcialmente avancada; Fase 8 marcada como parcial com regra 8.4 respeitada.
+  - Validado com Prettier, ESLint, `tsc --noEmit --pretty false`, `git diff --check`, `npm test` (229 testes) e `npm run build`.
+- Migracao visual FinFlow em modais e status:
+  - `ModalShell` ganhou backdrop com blur, surface mais premium, borda, radius e sombra alinhados ao FinFlow.
+  - `RuleModal` e `ConfirmModal` deixaram inline styles e passaram a usar classes reutilizaveis.
+  - Inputs/selects de formulario e botoes de acao foram reestilizados com focus ring/accent.
+  - `FixedExpenseRow` foi reescrito preservando comportamento e trocando o checkbox cru por controle `Pago`/`Pendente`.
+  - `roadmap-finflow-layout.md` marcou Fase 6.3 e Fase 9.1-9.3 como feitas, com validacao de foco/escape ainda parcial.
+  - Validado com Prettier, ESLint, `tsc --noEmit --pretty false`, `git diff --check`, `npm test` (229 testes) e `npm run build`.
+- Fechamento da migracao visual FinFlow:
+  - `ChartEmpty` deixou de usar emoji e passou a usar icone CSS discreto.
+  - `chartSeries` e `chartTheme` receberam paleta/eixos mais alinhados ao accent verde/azul do FinFlow.
+  - Cards de fatura ganharam classes de estado (`has-value`, `empty`, `locked`) para acabamento visual sem mudar fluxo inline.
+  - `ExportButton` foi reescrito para remover caractere corrompido e manter texto/confirmacao em ASCII.
+  - `ARCHITECTURE.md` atualizado com diretrizes FinFlow: topbar fixa, surfaces elevadas, accent verde, modais com blur, charts como apoio e FinFlow como referencia visual, nao dependencia.
+  - `roadmap-finflow-layout.md` marcado como fechado para implementacao automatizada; pontos restantes dependem de revisao visual manual ou decisao de produto.
+  - Validacao final passou: Prettier, ESLint, `tsc --noEmit --pretty false`, `git diff --check`, `npm test` (229 testes) e `npm run build`.
+  - `roadmap-finflow-layout.md` marcou Fase 10 como feita, com revisao visual desktop/mobile limitada ao ambiente.
+- Ajuste do fluxo de adicionar cartao:
+  - Modal de novo cartao deixou de oferecer seletor de icones.
+  - Criacao agora aceita `Nome do cartao` e `Fatura deste mes` opcional.
+  - Texto do modal deixa claro que a fatura pode ser informada depois.
+  - Ao salvar, o cartao continua recebendo cor automatica por banco quando detectada; se houver valor valido, a fatura do mes e lancada junto.
+  - Estilos antigos do seletor de icones foram removidos de `month-nav.css`.
+  - `MonthNav.test.tsx` atualizado para cobrir criacao sem fatura obrigatoria e criacao com fatura inicial.
+  - Validado com Prettier, ESLint, `tsc --noEmit --pretty false`, `git diff --check`, `npm test` (230 testes) e `npm run build`.
+- Remocao do legado de icones de cartao:
+  - `CardBillItem` agora guarda apenas `id`, `name` e `color` opcional.
+  - Removido `cardIconMap.ts` e `CARD_ICONS`.
+  - Gastos fixos e parcelamentos passaram a exibir nomes de cartao em vez de icones/fallbacks.
+  - Formulario de cartao em gastos/parcelamentos usa select textual para cartoes.
+  - Import/reducer normalizam `cardBills` para descartar qualquer campo antigo fora do modelo atual.
+  - Testes/fixtures foram atualizados para nao depender de `icon`.
+- Refinamento visual para aproximar do FinFlow:
+  - Tabs ficaram mais baixas e arredondadas.
+  - Botoes de fatura ficaram menos grossos; excluir ganhou simbolo CSS discreto.
+  - Cards de receitas/despesas do resumo ganharam marcador visual de tendencia.
+  - Parcelamentos trocaram o checkbox visual por botao `Pago`/`Pendente`, preservando `onTogglePaid`.
+  - Receitas agora renderiza o resumo dentro da propria secao, antes da tabela.
+  - Controle de ordenacao da tabela ficou oculto visualmente para a tabela seguir o layout limpo do FinFlow.
+  - Validado neste ambiente com Prettier, ESLint, `tsc --noEmit --pretty false` e `git diff --check`.
+  - `vitest` e `vite build` nao rodaram nesta tentativa por `spawn EPERM`; o bypass via Git Bash elevado foi bloqueado pelo limite de uso do ambiente.
+- Refinamento visual de tabelas FinFlow:
+  - Gastos fixos reorganizou colunas para `Descricao`, `Categoria`, `Pagamento`, `Vencimento`, `Valor`, `Pago`, `Acoes`.
+  - Gastos fixos deixou de exibir emojis de categoria/metodo nas celulas e passou a usar texto limpo.
+  - Receitas reorganizou colunas para `Descricao`, `Categoria`, `Recebimento`, `Recorrente`, `Valor`, `Acoes`, mantendo a tela sem status.
+  - Receitas ganhou terceiro card de resumo (`MEDIA`) para aproximar a proporcao visual dos cards do FinFlow sem criar status recebido/previsto.
+  - Acoes de linha deixaram de usar icones antigos e passaram a exibir `Editar`/`Excluir` como pills discretas.
+  - Validado sem testes, conforme combinado, com Prettier, ESLint, `tsc --noEmit --pretty false` e `git diff --check`.
+- Fechamento visual sem icones residuais:
+  - Removido `SelectWithIcon` e CSS associado.
+  - Categorias do form deixaram de carregar emojis, mantendo apenas labels textuais.
+  - Cards inferiores do resumo ganharam marcadores CSS discretos e mais espacamento.
+  - Graficos receberam area um pouco maior e segmented control interno mais arredondado.
+  - Marca do topo ganhou simbolo CSS proprio no estilo do FinFlow, sem asset externo.
+  - `ARCHITECTURE.md` atualizado para refletir que `inputs/` agora expõe apenas `Input`.
+  - Varredura em `src` confirmou que nao sobraram referencias a `SelectWithIcon`, `CARD_ICONS`, `ACTION_ICONS`, `ICONS` ou `cardIcon`.
+  - Validado sem testes/build, conforme combinado, com Prettier, ESLint, `tsc --noEmit --pretty false` e `git diff --check`.
+- Rodada de acabamento para aproximar mais dos prints do FinFlow:
+  - `app`/topbar/dashboard passaram a usar shell mais parecido com produto: barra fixa fina, conteudo centralizado e largura maxima controlada por `--app-max-width`.
+  - Faturas do mes ganharam painel mais alto, cards maiores e botoes internos mais achatados.
+  - Tabs, botoes de criacao e botoes de modal ficaram mais baixos, arredondados e verdes quando sao acao primaria.
+  - Tabelas compartilhadas ganharam linhas mais altas, surface/radius mais premium e acoes de criacao alinhadas ao FinFlow.
+  - Parcelamentos ganharam cards mais altos, barra de progresso mais proxima da referencia e status `Pago`/`Pendente` menos intrusivo.
+  - Saldo, cards de resumo e graficos tiveram ajustes de escala/padding para reduzir diferencas de hierarquia visual.
+  - Tema claro nao foi trabalhado nesta rodada por decisao explicita.
+  - Validado sem testes/build com Prettier, ESLint, `tsc --noEmit --pretty false` e `git diff --check`.
+- Ajustes finos apontados em QA visual:
+  - Faturas: `R$` do input ganhou largura reservada para nao ser cortado pelo valor; botoes `EM USO`/`Excluir` ficaram maiores.
+  - Resumo: marcadores de Receitas/Despesas foram redimensionados; guidance de despesas virou texto absoluto para nao alterar altura do card.
+  - Faturas no resumo ganharam marcador CSS de cartao.
+  - Grafico/lista de `Parcelas em aberto` passou a mostrar impacto mensal (`installmentValue`) em vez de total restante do parcelamento.
+  - Campos de tabela `Categoria`, `Pagamento` e `Vencimento` ganharam peso visual maior.
+  - Gastos Fixos passou a mostrar quantidade e total no subtitulo da secao.
+  - Parcelamentos passou a usar `RowActions`, igual a Gastos Fixos e Receitas.
+  - Receitas ganhou categoria no modal, mantendo a coluna da tabela consistente com o formulario.
+  - Modal de confirmacao recebeu ajustes de largura/espacamento.
+  - Validado sem testes/build com Prettier, ESLint, `tsc --noEmit --pretty false` e `git diff --check`.
+- Ajustes de icones e Receitas:
+  - Removidos marcadores CSS decorativos que estavam cortando/sobrepondo em Receitas, Despesas e cards inferiores do resumo.
+  - Icone de cartao dos cards de fatura do resumo foi movido para a esquerda do nome da fatura.
+  - Estado `Sem fatura lancada` ganhou bloco interno mais compacto para reduzir vazio visual.
+  - Botao `Excluir` dos cartoes em Faturas do Mes deixou de usar o desenho CSS quebrado e passou a usar um marcador textual simples.
+  - Categoria foi removida da UI de Receitas, do payload/formulario, da tabela e do tipo `Revenue`; dados antigos importados descartam esse campo no normalizer.
+  - Validado sem testes/build com Prettier, ESLint, `tsc --noEmit --pretty false` e `git diff --check`.
+- Migracao para biblioteca de icones:
+  - Adicionado uso de `lucide-react` para substituir pseudo-icones CSS frageis.
+  - Exportar link, alternancia de tema, adicionar cartao, excluir cartao, fatura no resumo, empty states de faturas/graficos e cards inferiores do resumo passaram a usar icones Lucide.
+  - Removidos pseudo-elementos CSS de icones que estavam quebrando ou sobrepondo botoes.
+  - Validado sem testes/build com Prettier, ESLint, `tsc --noEmit --pretty false` e `git diff --check`.
+- Refinamento de botoes e charts:
+  - Botoes primarios das sections passaram a usar `Plus` do Lucide e remover o `+` textual duplicado.
+  - Alinhamento de icone/texto dos botoes primarios foi ajustado com `inline-flex`, gap e altura consistentes.
+  - Grafico de rosca agora vira insight/lista quando um item domina 90% ou mais da distribuicao, evitando fatias quase invisiveis.
+  - Cards de chart em modo compacto ficaram menores para reduzir espaco em branco.
+  - Lista de parcelas em aberto teve altura minima reduzida para ocupar menos area vazia quando ha poucos itens.
+  - Validado sem testes/build com Prettier, ESLint, `tsc --noEmit --pretty false` e `git diff --check`.
+- Ajuste de layout do modal de exclusao:
+  - `ConfirmModal` ganhou um corpo proprio para separar mensagem e rodape de acoes.
+  - Modal de confirmacao teve largura, padding, gap e botoes ajustados para evitar aperto visual.
+  - Acoes de confirmacao ficam alinhadas no desktop e empilhadas em telas estreitas.
+- Planejamento de reorganizacao conceitual:
+  - Criado `roadmap-despesas-cartoes.md` para planejar a evolucao de `Gastos Fixos` para `Despesas`.
+  - Roadmap tambem planeja transformar `Parcelamentos` em `Cartoes`, movendo `Faturas do mes` para essa aba.
+  - Documento separa fases de navegacao, layout, resumo e dominio futuro de despesas variaveis.
+- Inicio da reorganizacao Despesas/Cartoes:
+  - Abas visiveis passaram a ser `Resumo`, `Despesas`, `Cartoes` e `Receitas`, preservando ids internos para reduzir risco.
+  - `Gastos Fixos` evoluiu visualmente para `Despesas Fixas`, com segmentacao `Fixas / Variaveis`; variaveis fica planejado/desabilitado por enquanto.
+  - `Faturas do mes` saiu do topo global e passou a ser renderizado dentro da aba `Cartoes`, acima de `Parcelamentos`.
+  - Area de faturas foi extraida para `CardBillsSection.tsx`; `MonthNav.tsx` fica como wrapper legado/testavel.
+  - `Resumo` manteve apenas leitura agregada de faturas, sem o CRUD completo no topo.
+  - Criado teste de `ExpensesSection` e ajustados testes existentes para os novos labels, sem executar a suite.
+  - `ARCHITECTURE.md` e `roadmap-despesas-cartoes.md` atualizados com o estado atual.
+- Ajustes de UX apos QA da reorganizacao:
+  - Hover dos botoes primarios de criar item foi corrigido para nao herdar fundo neutro.
+  - Cabecalho de `Faturas do mes` foi alinhado mais ao topo do painel e o vazio superior foi reduzido.
+  - Espacamento entre header e lista/empty state de `Parcelamentos` foi reduzido.
+  - Aba `Variaveis` em Despesas passou a ser acessivel, com placeholder e botao desabilitado ate a fase de CRUD.
+  - Receitas passaram a modelar `paymentDay` e `recurring`, mantendo `startMonth` como controle interno de validade.
+  - UI de Receitas removeu o subtexto, trocou `Mes de inicio` por `Dia de recebimento` e adicionou seletor de recorrencia.
+  - Cards de Receitas agora mostram `Total do mes`, `Ja recebido` e `A receber`, removendo `Lancamentos` e `Media`.
+  - Criados/ajustados testes para Receitas, Despesas variaveis e receita nao recorrente, sem executar a suite.
+- Padronizacao estrutural de Despesas:
+  - `RuleSection` e `CrudSection` passaram a aceitar `className` para sections com identidade visual propria.
+  - `Despesas Fixas` usa `expense-content-section`, igualando a arquitetura visual com `Parcelamentos`.
+  - Aba `Variaveis` usa a mesma estrutura de section.
+  - Gap entre header/subtexto e tabela/empty state foi reduzido de forma consistente para Despesas e Parcelamentos.
+- Planejamento de gastos variaveis e faturas:
+  - Criado `roadmap-gastos-variaveis-e-faturas.md`.
+  - Documento planeja `VariableExpense`, vencimento de fatura por cartao, edicao de cartao e reducao de friccao no cadastro.
+  - Roadmap registra perguntas em aberto antes da implementacao, especialmente sobre fatura manual vs automatica e escopo de automacoes.
+- Limpeza de roadmaps:
+  - `roadmap-finflow-layout.md` foi validado como encerrado e removido.
+  - `roadmap-despesas-cartoes.md` foi mantido porque ainda registra decisoes/pendencias de navegacao, Cartoes e validacao visual, alem de parte ter sido desdobrada no roadmap novo.
+- Fechamento de Despesas/Cartoes:
+  - `Resumo` ganhou CTA discreto `Ver cartoes`, apontando para a aba `Cartoes`.
+  - Empty states de faturas, parcelamentos e despesas variaveis foram ajustados para orientar melhor o usuario.
+  - `roadmap-despesas-cartoes.md` foi encerrado como reorganizacao estrutural.
+  - Itens de dominio novo, como despesas variaveis, vencimento de fatura por cartao e edicao de cartao, seguem no roadmap ativo `roadmap-gastos-variaveis-e-faturas.md`.
+- Refinamento do tema claro:
+  - Criado `roadmap-tema-claro-ui.md` com foco em fundo neutro, cards brancos, cores semanticas vivas e tabs de chart alinhadas a esquerda.
+  - Tokens claros foram ajustados para sair do creme pesado e usar cinza claro, branco, bordas suaves e sombras leves.
+  - Verde/vermelho do tema claro ficaram mais diretos para valores, status e acoes principais.
+  - Tabs principais mantem verde vivo, mas sem a borda preta pesada da referencia.
+  - Tabs internas dos graficos agora ficam alinhadas a esquerda e ocupam apenas a largura necessaria.
+  - Criado teste para garantir que os controles de modo do grafico continuam escopados ao card de chart.
+  - Segunda passada suavizou alertas, modais, inputs, empty states e bordas remanescentes do tema claro.
+  - Fonte da referencia FinFlow identificada como Geist; `web` agora carrega Geist via Google Fonts e usa como fonte principal.
+  - Tema escuro redesenhado para combinar com o tema claro: canvas quase-preto neutro, surfaces menos azuladas, bordas discretas e cores semanticas vivas sem neon.
+- Inicio do roadmap de gastos variaveis e faturas:
+  - Removidos `roadmap-despesas-cartoes.md` e `roadmap-tema-claro-ui.md`, mantendo apenas o roadmap ativo.
+  - Adicionado dominio inicial de `VariableExpense` com tipo, factory, normalizer, reducers, actions, context, persistencia Dexie e export/import.
+  - `buildMonthView`, resumo, faturas rastreadas e series de graficos agora consideram despesas variaveis do mes.
+  - Aba `Despesas > Variaveis` ganhou CRUD funcional com cadastro rapido por descricao/valor, campos secundarios compactos, edicao, exclusao e empty state.
+  - Exclusao de cartoes passa a considerar uso por despesas variaveis no mes.
+  - Cartoes ganharam `dueDay`, campo opcional de vencimento na criacao, modal de edicao de nome/vencimento e exibicao discreta do vencimento no card.
+  - Cards de fatura mantiveram largura estavel; edicao do cartao foi movida para o nome clicavel com icone discreto, deixando o topo livre para status/exclusao.
+  - CTA `Ver cartoes` saiu da linha propria do resumo e foi incorporado ao cabecalho do card `Parcelas em aberto`.
+  - Despesas variaveis ganharam linha de cadastro rapido dentro da tabela e preferencias locais para ultima categoria, ultimo pagamento e ultimo cartao.
+  - Roadmap ativo `roadmap-gastos-variaveis-e-faturas.md` foi fechado: itens de baixa friccao, testes de dominio, resumo/graficos e bloqueio de exclusao por variaveis foram marcados como feitos.
+  - Testes direcionados rodados: `ExpensesSection`, dominio de `VariableExpense`, series de graficos, selectors de resumo e `useCardDeleteReasons`.

@@ -20,9 +20,9 @@ export function RuleModal({
 }: RuleModalProps) {
   return (
     <ModalShell open={open} title={title} onClose={onClose}>
-      <form onSubmit={onSubmit} style={{ display: 'grid', gap: '10px' }}>
+      <form className="modal-form" onSubmit={onSubmit}>
         {children}
-        <div className="factions" style={{ marginTop: 4 }}>
+        <div className="factions">
           <button className="btn-save" type="submit">
             {submitLabel}
           </button>

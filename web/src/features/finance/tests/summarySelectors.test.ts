@@ -102,6 +102,7 @@ describe('summarySelectors.ts', () => {
           paid: false,
         },
       ],
+      variableExpenses: [],
       installments: [
         {
           id: 'inst-1',
@@ -118,11 +119,35 @@ describe('summarySelectors.ts', () => {
         },
       ],
       revenues: [],
-      totals: { despesasFixas: 60, receitas: 0, installments: 60 },
+      totals: { despesasFixas: 60, despesasVariaveis: 0, receitas: 0, installments: 60 },
     };
 
     it('sums fixed expenses and installments by card', () => {
       expect(buildTrackedCardBills(monthView)).toEqual({ nubank: 120 });
+    });
+
+    it('tracks variable expenses paid by card', () => {
+      expect(
+        buildTrackedCardBills({
+          ...monthView,
+          fixedExpenses: [],
+          installments: [],
+          variableExpenses: [
+            {
+              id: 'var-1',
+              name: 'Mercado',
+              amount: 90,
+              date: '2026-04-10',
+              monthKey: '2026-04',
+              category: 'casa',
+              paymentMethod: 'cartao',
+              card: 'nubank',
+              paid: false,
+              notes: '',
+            },
+          ],
+        })
+      ).toEqual({ nubank: 90 });
     });
 
     it('raises the bill when tracked card expenses are greater', () => {
@@ -178,6 +203,7 @@ describe('summarySelectors.ts', () => {
           paid: false,
         },
       ],
+      variableExpenses: [],
       installments: [],
       revenues: [
         {
@@ -191,7 +217,7 @@ describe('summarySelectors.ts', () => {
           notes: '',
         },
       ],
-      totals: { despesasFixas: 1620, receitas: 5000, installments: 0 },
+      totals: { despesasFixas: 1620, despesasVariaveis: 0, receitas: 5000, installments: 0 },
     };
 
     it('calculates fixedExpensesNonCard', () => {
@@ -253,6 +279,60 @@ describe('summarySelectors.ts', () => {
       const result = buildSummaryData(baseMonthView, {}, [], '2026-04', cardList);
       const itauCard = result.billCardsSummary.find((c) => c.key === 'itau');
       expect(itauCard).toBeDefined();
+    });
+
+    it('includes variable expenses in forecast and bill abatements', () => {
+      const result = buildSummaryData(
+        {
+          ...baseMonthView,
+          fixedExpenses: [],
+          variableExpenses: [
+            {
+              id: 'var-card',
+              name: 'Mercado',
+              amount: 100,
+              date: '2026-04-10',
+              monthKey: '2026-04',
+              category: 'casa',
+              paymentMethod: 'cartao',
+              card: 'nubank',
+              paid: false,
+              notes: '',
+            },
+            {
+              id: 'var-pix',
+              name: 'Padaria',
+              amount: 30,
+              date: '2026-04-11',
+              monthKey: '2026-04',
+              category: 'outro',
+              paymentMethod: 'pix',
+              card: null,
+              paid: true,
+              notes: '',
+            },
+          ],
+          totals: {
+            ...baseMonthView.totals,
+            despesasFixas: 0,
+            despesasVariaveis: 130,
+          },
+        },
+        { nubank: 150 },
+        [],
+        '2026-04',
+        [{ key: 'nubank', label: 'Nubank' }]
+      );
+
+      expect(result.despesasBrutas).toBe(180);
+      expect(result.despesasPagasBrutas).toBe(30);
+      expect(result.saldoPrevisto).toBe(4820);
+      expect(result.billCardsSummary[0]).toMatchObject({
+        key: 'nubank',
+        bill: 150,
+        abatimento: 100,
+        restanteFatura: 50,
+      });
     });
   });
 });

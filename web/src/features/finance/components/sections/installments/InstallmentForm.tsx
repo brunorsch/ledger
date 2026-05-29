@@ -1,9 +1,8 @@
 import type { ChangeEvent, Dispatch, SetStateAction } from 'react';
 import type { CardBillItem } from '../../../domain/types';
-import { buildCardIconMap } from '../../../lib/cardIconMap';
 import { useI18n } from '../../../lib/i18n';
 import { applyMoneyMask } from '../../../lib/moneyInput';
-import { Input, SelectWithIcon } from '../../inputs';
+import { Input } from '../../inputs';
 
 export type InstallmentFormState = {
   name: string;
@@ -36,7 +35,6 @@ function buildCardOptions(
 export function InstallmentForm({ form, setForm, cards }: InstallmentFormProps) {
   const { normalizeCardName } = useI18n();
   const cardOptions = buildCardOptions(cards, form.card, normalizeCardName);
-  const cardIconMap = buildCardIconMap(cards);
 
   return (
     <>
@@ -81,15 +79,19 @@ export function InstallmentForm({ form, setForm, cards }: InstallmentFormProps) 
         />
         <label className="field">
           <span>Cartão</span>
-          <SelectWithIcon
+          <select
             value={form.card}
             onChange={(e: ChangeEvent<HTMLSelectElement>) =>
               setForm((prev) => ({ ...prev, card: e.target.value }))
             }
-            options={cardOptions}
-            iconMap={cardIconMap}
-            ariaLabel="Cartão"
-          />
+            aria-label="Cartão"
+          >
+            {cardOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </label>
       </div>
     </>

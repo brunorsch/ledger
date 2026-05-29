@@ -1,29 +1,14 @@
 import { DEFAULT_CARD_ID } from '../domain/constants.js';
 
-export const ICONS: Record<string, string> = {
-  boleto: '📄',
-  pix: '⚡',
-  [DEFAULT_CARD_ID]: '💳',
-};
-
-export const CARD_ICONS: Record<string, string> = {
-  [DEFAULT_CARD_ID]: '💳',
-};
-
 export const CATEGORIES: Record<string, string> = {
-  casa: '🏠 CASA',
-  telefone: '📱 TELEFONE',
-  aluguel: '🏠 ALUGUEL',
-  streaming: '🎬 STREAMING',
-  seguro: '🔒 SEGURO',
-  investimento: '📈 INVESTIMENTO',
-  outro: '📦 OUTRO',
+  casa: 'CASA',
+  telefone: 'TELEFONE',
+  aluguel: 'ALUGUEL',
+  streaming: 'STREAMING',
+  seguro: 'SEGURO',
+  investimento: 'INVESTIMENTO',
+  outro: 'OUTRO',
 };
-
-export const ACTION_ICONS = {
-  edit: '✎',
-  delete: '🗑',
-} as const;
 
 export interface Tab {
   id: string;
@@ -40,7 +25,6 @@ export const TABS: Tab[] = [
 export interface BillCardConfig {
   key: string;
   label: string;
-  icon?: string;
   color?: string;
 }
 
@@ -59,6 +43,7 @@ export const CATEGORY_LABELS: Record<string, string> = {
   cartao: 'CARTAO',
   streaming: 'STREAMING',
   seguro: 'SEGURO',
+  investimento: 'INVESTIMENTO',
   outro: 'OUTRO',
 };
 

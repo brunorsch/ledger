@@ -1,13 +1,11 @@
 import type { InstallmentItem } from '../../../domain/types';
 import { formatStartMonth } from '../../../lib/utils';
-import { CARD_ICONS } from '../../../ui/constants';
 import { RowActions } from '../shared/RowActions';
 
 interface InstallmentRowProps {
   item: InstallmentItem;
   money: (value: number) => string;
   isPaid: boolean;
-  cardIconMap?: Record<string, string>;
   onTogglePaid: (itemId: string, paid: boolean) => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -17,20 +15,15 @@ export function InstallmentRow({
   item,
   money,
   isPaid,
-  cardIconMap,
   onTogglePaid,
   onEdit,
   onDelete,
 }: InstallmentRowProps) {
-  const cardIcon = CARD_ICONS[item.card as keyof typeof CARD_ICONS];
-  const icon = cardIcon || cardIconMap?.[item.card];
-  const cardIconOnly = icon || '💳';
-
   return (
     <tr>
       <td>{item.name}</td>
       <td>{money(item.installmentValue)}</td>
-      <td title={item.card}>{cardIconOnly}</td>
+      <td>{item.card || 'Sem cartao'}</td>
       <td>{formatStartMonth(item.startMonth)}</td>
       <td>
         <div

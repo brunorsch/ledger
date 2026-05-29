@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 import { formatMoney } from '../lib/utils';
 
@@ -17,6 +18,8 @@ interface RuleSectionProps<TItem extends RuleSectionItem> {
   addLabel?: string;
   onAddClick: () => void;
   sortBy?: 'name' | 'value-asc' | 'value-desc';
+  topContent?: ReactNode;
+  className?: string;
 }
 
 export default function RuleSection<TItem extends RuleSectionItem>({
@@ -29,6 +32,8 @@ export default function RuleSection<TItem extends RuleSectionItem>({
   addLabel = '+ Adicionar',
   onAddClick,
   sortBy = 'name',
+  topContent,
+  className = '',
 }: RuleSectionProps<TItem>) {
   const [sort, setSort] = useState(sortBy);
 
@@ -44,22 +49,27 @@ export default function RuleSection<TItem extends RuleSectionItem>({
       );
     return 0;
   });
+  const [descriptionText, descriptionMetric] = description.includes(' - ')
+    ? description.split(' - ')
+    : [description, ''];
+  const normalizedAddLabel = addLabel.replace(/^\+\s*/, '');
 
   return (
-    <section className="section">
+    <section className={`section ${className}`.trim()}>
       <div className="sec-header">
         <div>
           <p className="sec-title">{title}</p>
-          <p
-            style={{
-              color: 'var(--color-text-secondary)',
-              fontSize: '12px',
-              marginTop: 4,
-              lineHeight: 1.5,
-            }}
-          >
-            {description}
-          </p>
+          {descriptionText || descriptionMetric ? (
+            <p className="sec-description">
+              {descriptionText}
+              {descriptionMetric ? (
+                <>
+                  {' '}
+                  - <span>{descriptionMetric}</span>
+                </>
+              ) : null}
+            </p>
+          ) : null}
         </div>
         <div className="sec-actions">
           <select
@@ -71,13 +81,16 @@ export default function RuleSection<TItem extends RuleSectionItem>({
             <option value="value-asc">Menor valor</option>
             <option value="value-desc">Maior valor</option>
           </select>
-          <button type="button" className="add-btn" onClick={onAddClick}>
-            {addLabel}
+          <button type="button" className="add-btn add-btn--primary" onClick={onAddClick}>
+            <Plus size={13} strokeWidth={2.4} aria-hidden />
+            {normalizedAddLabel}
           </button>
         </div>
       </div>
 
-      <div className="card" style={{ marginTop: '10px', overflow: 'hidden' }}>
+      {topContent}
+
+      <div className="card rule-table-card">
         {sortedItems.length ? (
           <table>
             <thead>
@@ -90,9 +103,7 @@ export default function RuleSection<TItem extends RuleSectionItem>({
             <tbody>{sortedItems.map((item) => renderItem(item, formatMoney))}</tbody>
           </table>
         ) : (
-          <div style={{ padding: '14px', color: 'var(--color-text-secondary)', fontSize: '13px' }}>
-            {emptyText}
-          </div>
+          <div className="rule-empty-state">{emptyText}</div>
         )}
       </div>
     </section>

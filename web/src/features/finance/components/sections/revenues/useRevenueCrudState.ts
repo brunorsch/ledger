@@ -12,7 +12,7 @@ export function useRevenueCrudState({ currentMonthKey, onDelete }: UseRevenueCru
   return useCrudState<RevenueFormState, Revenue>({
     createEmptyForm: () => createRevenueEmptyForm(currentMonthKey),
     createEditForm: (item) => createRevenueEditForm(item, currentMonthKey),
-    canSubmit: (form) => !!(form.name.trim() && form.amount !== '' && form.startMonth.trim()),
+    canSubmit: (form) => !!(form.name.trim() && form.amount !== ''),
     onDelete,
   });
 }

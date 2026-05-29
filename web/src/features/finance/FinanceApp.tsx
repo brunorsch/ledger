@@ -1,13 +1,10 @@
+import { Moon, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { AppTabs } from './components/app-shell/AppTabs';
+import { CardBillsSection } from './components/CardBillsSection';
 import { LoadingScreen } from './components/app-shell/LoadingScreen';
 import { ExportButton } from './components/ExportButton';
-import MonthNav from './components/MonthNav';
-import {
-  FixedExpensesSection,
-  InstallmentsSection,
-  RevenuesSection,
-} from './components/sections/index';
+import { ExpensesSection, InstallmentsSection, RevenuesSection } from './components/sections/index';
 import { SummaryDashboard } from './components/summary/SummaryDashboard';
 import { useFinance } from './context/FinanceContext';
 import { type PieMode, OVERRIDE_TYPES } from './domain/constants';
@@ -28,6 +25,7 @@ export default function FinanceApp() {
   const { monthView, currentKey, currentDate } = finance;
   const { fixedExpenses, revenues, monthOverrides } = finance;
   const settings = useFinanceSettings();
+  const ThemeIcon = settings.theme === 'premium' ? Sun : Moon;
   const { isReady } = finance;
   const actions = useFinanceActions();
   const [activeTab, setActiveTab] = useState('resumo');
@@ -60,6 +58,7 @@ export default function FinanceApp() {
   const cardDeleteReasons = useCardDeleteReasons({
     cardBills: settings.cardBills || [],
     fixedExpenses,
+    monthViewVariableExpenses: monthView.variableExpenses,
     monthViewInstallments: monthView.installments,
     monthCardBills,
     currentKey,
@@ -85,14 +84,16 @@ export default function FinanceApp() {
           barChartRef={barChartRef}
           onToggleMonthPaid={toggleMonthPaid}
           cardList={cardListMapped}
+          onOpenCards={() => setActiveTab('parcelas')}
         />
       );
     }
 
     if (tabId === 'gastos') {
       return (
-        <FixedExpensesSection
+        <ExpensesSection
           items={fixedExpenses}
+          variableItems={monthView.variableExpenses}
           currentMonthKey={currentKey}
           monthOverrides={monthOverrides}
           cardList={cardBillsList}
@@ -105,6 +106,9 @@ export default function FinanceApp() {
             actions.updateFixedExpense(id, rest as any);
           }}
           onDelete={actions.removeFixedExpense}
+          onAddVariable={actions.addVariableExpense}
+          onEditVariable={actions.updateVariableExpense}
+          onDeleteVariable={actions.removeVariableExpense}
           onMonthFixedExpenseAmount={setMonthFixedExpenseAmount}
           onTogglePaid={(itemId, paid) =>
             toggleMonthPaid(OVERRIDE_TYPES.FIXED_EXPENSE_PAYMENT, itemId, paid)
@@ -115,18 +119,28 @@ export default function FinanceApp() {
 
     if (tabId === 'parcelas') {
       return (
-        <InstallmentsSection
-          items={monthView.installments as any}
-          currentMonthKey={currentKey}
-          monthOverrides={monthOverrides}
-          cardList={cardBillsList}
-          onAdd={actions.addInstallment}
-          onEdit={actions.updateInstallment}
-          onDelete={actions.removeInstallment}
-          onTogglePaid={(itemId, paid) =>
-            toggleMonthPaid(OVERRIDE_TYPES.INSTALLMENT_PAYMENT, itemId, paid)
-          }
-        />
+        <section className="cards-section">
+          <CardBillsSection
+            cardBills={monthCardBills}
+            onSetCardBill={setMonthCardBill}
+            cardList={cardBillsList}
+            onSetCardList={handleSetCardList}
+            cardDeleteReasons={cardDeleteReasons}
+          />
+
+          <InstallmentsSection
+            items={monthView.installments as any}
+            currentMonthKey={currentKey}
+            monthOverrides={monthOverrides}
+            cardList={cardBillsList}
+            onAdd={actions.addInstallment}
+            onEdit={actions.updateInstallment}
+            onDelete={actions.removeInstallment}
+            onTogglePaid={(itemId, paid) =>
+              toggleMonthPaid(OVERRIDE_TYPES.INSTALLMENT_PAYMENT, itemId, paid)
+            }
+          />
+        </section>
       );
     }
 
@@ -155,33 +169,58 @@ export default function FinanceApp() {
     <div className="app">
       <h2 className="sr-only">Painel de controle financeiro</h2>
 
-      <header className="sticky-header">
-        <MonthNav
-          label={monthLabel(currentDate)}
-          onPrev={() => actions.changeMonth(-1)}
-          onNext={() => actions.changeMonth(1)}
-          theme={settings.theme}
-          onToggleTheme={() =>
-            actions.setTheme(settings.theme === 'premium' ? 'default' : 'premium')
-          }
-          cardBills={monthCardBills}
-          onSetCardBill={setMonthCardBill}
-          cardList={cardBillsList}
-          onSetCardList={handleSetCardList}
-          cardDeleteReasons={cardDeleteReasons}
-        />
-
-        <div className="finance-backup-actions">
-          <ExportButton />
+      <header className="app-topbar">
+        <div className="app-brand" aria-label="Ledger">
+          <span className="app-brand-mark" aria-hidden="true">
+            L
+          </span>
+          <span>Ledger</span>
         </div>
-        <AppTabs tabs={TABS} activeTab={activeTab} translate={t} onChange={setActiveTab} />
+
+        <div className="app-month-stepper" role="group" aria-label="Navegacao de meses">
+          <button
+            className="month-step-btn month-step-btn--icon"
+            type="button"
+            onClick={() => actions.changeMonth(-1)}
+            aria-label="Mes anterior"
+          >
+            &lt;
+          </button>
+          <h2>{monthLabel(currentDate)}</h2>
+          <button
+            className="month-step-btn month-step-btn--icon"
+            type="button"
+            onClick={() => actions.changeMonth(1)}
+            aria-label="Proximo mes"
+          >
+            &gt;
+          </button>
+        </div>
+
+        <div className="app-topbar-actions">
+          <ExportButton />
+          <button
+            className="theme-btn"
+            onClick={() => actions.setTheme(settings.theme === 'premium' ? 'default' : 'premium')}
+            aria-label={`Mudar para tema ${settings.theme === 'premium' ? 'Claro' : 'Escuro'}`}
+            title={`Mudar para tema ${settings.theme === 'premium' ? 'Claro' : 'Escuro'}`}
+          >
+            <ThemeIcon aria-hidden="true" className="theme-btn-icon" size={15} strokeWidth={2} />
+          </button>
+        </div>
       </header>
 
-      <main className="app-content" aria-live="polite">
-        <div className="app-screen app-screen--active" key={activeTab}>
-          {renderTabContent(activeTab)}
-        </div>
-      </main>
+      <div className="dashboard-shell">
+        <section className="dashboard-controls">
+          <AppTabs tabs={TABS} activeTab={activeTab} translate={t} onChange={setActiveTab} />
+        </section>
+
+        <main className="app-content" aria-live="polite">
+          <div className="app-screen app-screen--active" key={activeTab}>
+            {renderTabContent(activeTab)}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

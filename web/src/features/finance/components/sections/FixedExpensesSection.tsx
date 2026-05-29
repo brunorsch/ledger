@@ -4,7 +4,8 @@ import type { CardBillItem, FixedExpense } from '../../domain/types';
 import { useActiveFixedExpenses } from '../../hooks/useActiveFixedExpenses';
 import { useCardList } from '../../hooks/useCardList';
 import { useMonthPaymentMap } from '../../hooks/useMonthPaymentMap';
-import { buildCardIconMap } from '../../lib/cardIconMap';
+import { useI18n } from '../../lib/i18n';
+import { formatMoney } from '../../lib/utils';
 import { selectMonthFixedExpenseAmounts } from '../../selectors/monthOverrideSelectors';
 import { FixedExpenseForm, type FixedExpenseFormState } from './fixed-expenses/FixedExpenseForm';
 import { buildFixedExpensePayload } from './fixed-expenses/fixedExpenseFormHelpers';
@@ -42,11 +43,30 @@ export function FixedExpensesSection({
   onMonthFixedExpenseAmount,
   cardList,
 }: FixedExpensesSectionProps) {
+  const { normalizeCardName } = useI18n();
   const cards = useCardList(cardList);
 
-  const cardIconMap = useMemo(() => buildCardIconMap(cards), [cards]);
+  const cardLabelMap = useMemo(
+    () =>
+      cards.reduce(
+        (acc, card) => {
+          acc[card.id] = normalizeCardName(card.name);
+          return acc;
+        },
+        {} as Record<string, string>
+      ),
+    [cards, normalizeCardName]
+  );
 
   const activeItems = useActiveFixedExpenses(items, currentMonthKey);
+  const fixedTotal = activeItems.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const fixedLabels = useMemo(
+    () => ({
+      ...FIXED_EXPENSE_LABELS,
+      description: `${activeItems.length} lancamento${activeItems.length === 1 ? '' : 's'} - ${formatMoney(fixedTotal)}`,
+    }),
+    [activeItems.length, fixedTotal]
+  );
 
   const { form, setForm, canSubmit, openCreateForm, openEditForm, resetForm } =
     useFixedExpenseCrudState({
@@ -77,7 +97,8 @@ export function FixedExpensesSection({
 
   return (
     <CrudSection
-      labels={FIXED_EXPENSE_LABELS}
+      className="expense-content-section"
+      labels={fixedLabels}
       items={activeItems}
       form={form}
       canSubmit={canSubmit}
@@ -102,7 +123,7 @@ export function FixedExpensesSection({
             tempValue={tempInputValues[item.id]}
             hasOverride={hasOverride}
             isPaid={monthPaymentMap.get(item.id)?.paid === true}
-            cardIconMap={cardIconMap}
+            cardLabelMap={cardLabelMap}
             onMonthAmountInput={handleMonthAmountInput}
             onMonthAmountBlur={handleMonthAmountBlur}
             onMonthAmountChange={handleMonthAmountChange}

@@ -5,9 +5,18 @@ import {
   createDefaultFixedExpense,
   createDefaultInstallment,
   createDefaultRevenue,
+  createDefaultVariableExpense,
 } from './factories';
 import { matchOverride } from './overrides/repository';
-import type { FinanceState, FixedExpense, Installment, OverrideType, Revenue } from './types';
+import type {
+  CardBillItem,
+  FinanceState,
+  FixedExpense,
+  Installment,
+  OverrideType,
+  Revenue,
+  VariableExpense,
+} from './types';
 
 export function changeMonth(state: FinanceState, step: number): FinanceState {
   const next = new Date(state.currentDate);
@@ -31,36 +40,57 @@ export function setCardBills(
   state: FinanceState,
   cardBills: FinanceState['settings']['cardBills']
 ): FinanceState {
-  return { ...state, settings: { ...state.settings, cardBills } };
+  const normalizedCardBills = (cardBills || []).map((card) => {
+    const normalized: CardBillItem = { id: card.id, name: card.name };
+    if (card.color) normalized.color = card.color;
+    if (card.dueDay !== undefined) normalized.dueDay = card.dueDay;
+    return normalized;
+  });
+
+  return { ...state, settings: { ...state.settings, cardBills: normalizedCardBills } };
 }
 
 export function addFixedExpense(state: FinanceState, data: Partial<FixedExpense>): FinanceState {
   return {
     ...state,
-    fixedExpenses: [
-      ...state.fixedExpenses,
-      createDefaultFixedExpense(data),
-    ],
+    fixedExpenses: [...state.fixedExpenses, createDefaultFixedExpense(data)],
   };
 }
 
 export function addRevenue(state: FinanceState, data: Partial<Revenue>): FinanceState {
   return {
     ...state,
-    revenues: [
-      ...state.revenues,
-      createDefaultRevenue(data),
-    ],
+    revenues: [...state.revenues, createDefaultRevenue(data)],
+  };
+}
+
+export function addVariableExpense(
+  state: FinanceState,
+  data: Partial<VariableExpense>
+): FinanceState {
+  return {
+    ...state,
+    variableExpenses: [...(state.variableExpenses || []), createDefaultVariableExpense(data)],
   };
 }
 
 export function addInstallment(state: FinanceState, data: Partial<Installment>): FinanceState {
   return {
     ...state,
-    installments: [
-      ...state.installments,
-      createDefaultInstallment(data),
-    ],
+    installments: [...state.installments, createDefaultInstallment(data)],
+  };
+}
+
+export function updateVariableExpense(
+  state: FinanceState,
+  id: string,
+  updates: Partial<VariableExpense>
+): FinanceState {
+  return {
+    ...state,
+    variableExpenses: (state.variableExpenses || []).map((item) =>
+      item.id === id ? { ...item, ...updates } : item
+    ),
   };
 }
 
@@ -74,6 +104,13 @@ export function updateFixedExpense(
     fixedExpenses: state.fixedExpenses.map((item) =>
       item.id === id ? { ...item, ...updates } : item
     ),
+  };
+}
+
+export function removeVariableExpense(state: FinanceState, id: string): FinanceState {
+  return {
+    ...state,
+    variableExpenses: (state.variableExpenses || []).filter((item) => item.id !== id),
   };
 }
 

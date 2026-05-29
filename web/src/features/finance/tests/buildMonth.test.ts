@@ -55,6 +55,57 @@ describe('buildMonthView', () => {
     expect(result.totals.despesasFixas).toBe(1620);
   });
 
+  it('includes variable expenses in the selected month totals', () => {
+    const state = {
+      ...emptyFinanceState(),
+      currentDate: new Date('2026-04-15'),
+      revenues: [
+        {
+          id: 'r1',
+          name: 'Salario',
+          baseAmount: 1000,
+          active: true,
+          startMonth: '2026-01',
+          endMonth: null,
+          notes: '',
+        },
+      ],
+      variableExpenses: [
+        {
+          id: 'v1',
+          name: 'Mercado',
+          amount: 120,
+          date: '2026-04-10',
+          monthKey: '2026-04',
+          category: 'casa',
+          paymentMethod: 'pix',
+          card: null,
+          paid: true,
+          notes: '',
+        },
+        {
+          id: 'v2',
+          name: 'Outro mes',
+          amount: 90,
+          date: '2026-05-01',
+          monthKey: '2026-05',
+          category: 'outro',
+          paymentMethod: 'pix',
+          card: null,
+          paid: true,
+          notes: '',
+        },
+      ],
+    };
+
+    const result = buildMonthView(state);
+
+    expect(result.variableExpenses).toHaveLength(1);
+    expect(result.totals.despesasVariaveis).toBe(120);
+    expect(result.totals.despesas).toBe(120);
+    expect(result.totals.saldo).toBe(880);
+  });
+
   it('includes revenues with null endMonth (infinite) for future months', () => {
     const state = {
       ...emptyFinanceState(),
@@ -80,6 +131,36 @@ describe('buildMonthView', () => {
 
     expect(result.revenues).toHaveLength(1);
     expect(result.totals.receitas).toBe(5000);
+  });
+
+  it('includes non-recurring revenue only in its start month', () => {
+    const state = {
+      ...emptyFinanceState(),
+      fixedExpenses: [],
+      revenues: [
+        {
+          id: '1',
+          name: 'Freelance',
+          baseAmount: 1200,
+          active: true,
+          recurring: false,
+          paymentDay: 12,
+          startMonth: '2026-04',
+          endMonth: null,
+          notes: '',
+        },
+      ],
+      installments: [],
+      monthOverrides: [],
+    };
+
+    const april = buildMonthView({ ...state, currentDate: new Date('2026-04-15') });
+    const may = buildMonthView({ ...state, currentDate: new Date('2026-05-15') });
+
+    expect(april.revenues).toHaveLength(1);
+    expect(april.totals.receitas).toBe(1200);
+    expect(may.revenues).toHaveLength(0);
+    expect(may.totals.receitas).toBe(0);
   });
 
   it('includes revenues starting in future month', () => {

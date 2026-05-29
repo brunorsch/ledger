@@ -1,7 +1,7 @@
 import type { FixedExpense } from '../../../domain/types';
 import { formatMoneyInput } from '../../../lib/moneyInput';
-import { formatStartMonth, resolvePaymentMethod } from '../../../lib/utils';
-import { CARD_ICONS, CATEGORIES, ICONS } from '../../../ui/constants';
+import { resolvePaymentMethod } from '../../../lib/utils';
+import { CATEGORY_LABELS } from '../../../ui/constants';
 import { RowActions } from '../shared/RowActions';
 
 interface FixedExpenseRowProps {
@@ -17,7 +17,7 @@ interface FixedExpenseRowProps {
   onTogglePaid: (itemId: string, paid: boolean) => void;
   onEdit: () => void;
   onDelete: () => void;
-  cardIconMap?: Record<string, string>;
+  cardLabelMap?: Record<string, string>;
 }
 
 export function FixedExpenseRow({
@@ -33,11 +33,25 @@ export function FixedExpenseRow({
   onTogglePaid,
   onEdit,
   onDelete,
-  cardIconMap,
+  cardLabelMap,
 }: FixedExpenseRowProps) {
+  const methodOrCard = resolvePaymentMethod(item);
+  const paymentLabel =
+    item.paymentMethod === 'cartao' && item.card
+      ? cardLabelMap?.[item.card] || item.card
+      : methodOrCard === 'pix'
+        ? 'Pix'
+        : methodOrCard === 'boleto'
+          ? 'Boleto'
+          : 'Cartao';
+  const categoryLabel = CATEGORY_LABELS[item.category] || 'OUTRO';
+
   return (
     <tr>
       <td>{item.name}</td>
+      <td>{categoryLabel}</td>
+      <td>{paymentLabel}</td>
+      <td>{item.dueDay ? `Dia ${item.dueDay}` : '-'}</td>
       <td>
         <div className="month-amount-cell">
           <input
@@ -50,43 +64,28 @@ export function FixedExpenseRow({
             autoComplete="off"
             placeholder={money(item.amount)}
           />
-          {hasOverride && (
+          {hasOverride ? (
             <button
               type="button"
               className="clear-override"
               onClick={() => onMonthAmountChange(item.id, null)}
               title="Restaurar valor original"
             >
-              ×
+              x
             </button>
-          )}
+          ) : null}
         </div>
       </td>
       <td>
-        {(() => {
-          const methodOrCard = resolvePaymentMethod(item);
-          if (item.paymentMethod === 'cartao' && item.card) {
-            // Prefer dynamic card icon map, then CARD_ICONS, then ICONS
-            return (
-              (cardIconMap && cardIconMap[item.card]) ||
-              CARD_ICONS[item.card as keyof typeof CARD_ICONS] ||
-              ICONS[item.card] ||
-              '💳'
-            );
-          }
-          return ICONS[methodOrCard] || '💳';
-        })()}
-      </td>
-      <td>{CATEGORIES[item.category] || '📦 OUTRO'}</td>
-      <td>{item.dueDay ? `Dia ${item.dueDay}` : '-'}</td>
-      <td>{formatStartMonth(item.startMonth)}</td>
-      <td>
-        <input
-          type="checkbox"
-          checked={isPaid}
-          onChange={(e) => onTogglePaid(item.id, e.target.checked)}
-          aria-label={`Marcar ${item.name} como pago no mês`}
-        />
+        <label className={`table-status-toggle ${isPaid ? 'paid' : 'pending'}`}>
+          <input
+            type="checkbox"
+            checked={isPaid}
+            onChange={(e) => onTogglePaid(item.id, e.target.checked)}
+            aria-label={`Marcar ${item.name} como pago no mes`}
+          />
+          <span>{isPaid ? 'Pago' : 'Pendente'}</span>
+        </label>
       </td>
       <td>
         <RowActions onEdit={onEdit} onDelete={onDelete} />

@@ -9,7 +9,7 @@ e futuras refatoracoes.
 ## 1. Visao Geral
 
 - **Stack:** React 18, TypeScript, Vite 8, Vitest, ESLint, Prettier.
-- **UI:** React com componentes locais e CSS modularizado por area.
+- **UI:** React com componentes locais, `lucide-react` para icones e CSS modularizado por area.
 - **Persistencia:** IndexedDB via Dexie.
 - **Graficos:** Chart.js, carregado sob demanda.
 - **Estado global:** Context API com reducers/funcoes puras de dominio e hooks de fachada.
@@ -76,12 +76,13 @@ de negocio duradoura em componentes.
 Principais grupos:
 
 - `app-shell/`: abas e tela de loading.
-- `inputs/`: `Input`, `SelectWithIcon`.
+- `inputs/`: `Input`.
 - `modals/`: `ModalShell`, `ConfirmModal`, `RuleModal`.
-- `sections/`: telas CRUD de receitas, gastos fixos e parcelamentos.
+- `sections/`: telas de receitas, despesas e cartoes.
 - `sections/shared/`: abstracoes compartilhadas pelas sections.
 - `summary/`: dashboard/resumo e estados vazios de graficos.
-- `MonthNav.tsx`: navegacao mensal e faturas por cartao.
+- `CardBillsSection.tsx`: painel de faturas por cartao usado dentro da aba Cartoes.
+- `MonthNav.tsx`: wrapper legado/testavel que combina navegacao mensal e `CardBillsSection`.
 - `RuleSection.tsx`: tabela generica ordenavel usada pelas sections.
 
 ### 3.2 Sections
@@ -89,8 +90,9 @@ Principais grupos:
 As sections especificas ainda preservam as diferencas de dominio:
 
 - `RevenuesSection`: receitas recorrentes e override mensal de valor.
-- `FixedExpensesSection`: gastos fixos, override mensal de valor, pago/no pago e cartao.
-- `InstallmentsSection`: parcelamentos, cartao e pago/no pago.
+- `ExpensesSection`: composicao de Despesas; hoje exibe `Fixas` e reserva `Variaveis` para fase futura.
+- `FixedExpensesSection`: despesas fixas, override mensal de valor, pago/no pago e cartao.
+- `InstallmentsSection`: parcelamentos, cartao e pago/no pago dentro da aba Cartoes.
 
 O shell comum foi extraido para `sections/shared/CrudSection.tsx`, que cuida de:
 
@@ -102,7 +104,11 @@ O shell comum foi extraido para `sections/shared/CrudSection.tsx`, que cuida de:
 - `useCrudFormFlow`.
 
 As sections continuam responsaveis por preparar dados derivados locais e renderizar
-suas rows.
+suas rows. `ExpensesSection` e uma camada de composicao para a nova linguagem de
+produto, sem criar dominio de despesas variaveis ainda. `InstallmentsSection` e a
+excecao visual principal: ela preserva os mesmos hooks, modais, payloads e acoes
+do CRUD, mas renderiza cards de progresso em vez da tabela generica porque
+parcelamentos se beneficiam de leitura temporal.
 
 ### 3.3 Domain
 
@@ -140,9 +146,10 @@ Exemplos:
 - `schema.ts`: estado vazio e versao de schema.
 - `currency.ts` e `moneyInput.ts`: formatacao e mascara monetaria.
 - `utils.ts`: utilitarios de data/mes, `clone`, `resolvePaymentMethod`, `softDeleteItem`.
-- `cardIconMap.ts`: mapa de icones dinamicos de cartao.
 - `exportData.ts`: import/export via arquivo/link.
 - `chartLoader.ts`, `chartSeries.ts`, `charts/`: suporte aos graficos.
+- `charts/chartTheme.ts`: tokens compartilhados para eixos, grades e textos de
+  Chart.js.
 
 ### 3.6 Selectors
 
@@ -170,9 +177,10 @@ interface FinanceState {
 }
 ```
 
-### 4.2 Gastos Fixos
+### 4.2 Despesas Fixas
 
-`FixedExpense` representa um gasto recorrente.
+`FixedExpense` representa uma despesa recorrente. Na UI, ele aparece dentro da
+aba **Despesas > Fixas**.
 
 Campos principais:
 
@@ -211,7 +219,7 @@ Remocao e soft-delete: a remocao define `closedAt` usando `softDeleteItem`.
 
 ### 4.4 Receitas
 
-`Revenue` representa uma receita recorrente.
+`Revenue` representa uma receita do mes, recorrente ou pontual.
 
 Campos principais:
 
@@ -220,11 +228,15 @@ Campos principais:
 - `baseAmount`
 - `active`
 - `startMonth`
+- `paymentDay`
+- `recurring`
 - `endMonth`
-- `category`
 - `notes`
 
-Receitas podem ter override mensal de valor.
+`startMonth` e o mes de validade inicial no dominio. Na UI, o usuario informa o
+dia de recebimento (`paymentDay`) e se a receita e recorrente. Receitas nao
+recorrentes aparecem apenas no mes em que foram criadas. Receitas podem ter
+override mensal de valor.
 
 ### 4.5 Overrides Mensais
 
@@ -292,6 +304,32 @@ Regras:
 
 - Evite duplicar base de botao/label.
 - Use tokens existentes antes de criar novas cores.
+- A linguagem visual atual segue a direcao FinFlow: topbar fixa, surfaces
+  elevadas, accent verde, cards com `--shadow-surface`, tabs segmentadas e
+  modais com backdrop escuro/blur.
+- `--color-background-primary`, `--color-background-secondary`,
+  `--color-background-elevated`, `--color-background-hover`,
+  `--color-accent`, `--color-accent-strong`, `--color-accent-muted`,
+  `--shadow-surface` e `--shadow-glow-accent` sao os tokens principais para
+  novas superficies.
+- Nao copie Tailwind, Next.js, mocks ou componentes do `finflow`; use-o apenas
+  como referencia visual e adapte para os componentes/CSS locais.
+- Para alertas orientativos, use os tokens `--color-alert-guidance-bg` e
+  `--color-alert-guidance-border`; eles existem nos temas default e premium.
+- A escala principal de espacamento vive em `styles/theme/tokens.css`:
+  `--layout-gap-sm` (8px), `--layout-gap` (12px),
+  `--layout-gap-section` (16px) e `--layout-gap-lg` (24px).
+- Em shells, grids, cards e secoes, prefira esses tokens a valores soltos de
+  espacamento.
+- Microcopy de resumo deve priorizar clareza emocional: comunicar se o mes esta
+  confortavel, apertado ou negativo antes de exibir detalhes tecnicos.
+- Graficos devem ser apoio, nao a primeira resposta. Quando houver poucos dados,
+  prefira estados compactos de insight; use Chart.js para comparacoes com
+  diversidade suficiente.
+- `ChartEmpty` deve permanecer como estado visual discreto, sem depender de emoji
+  ou asset externo.
+- Cards de parcelamento devem preservar progresso, valor mensal, parcela atual e
+  status `Perto de quitar` sem alterar regra financeira.
 - Ajustes mobile devem ser tratados com cuidado: a V1 nao foi originalmente
   desenhada mobile-first, entao validacao visual e obrigatoria quando houver
   mudanca responsiva.

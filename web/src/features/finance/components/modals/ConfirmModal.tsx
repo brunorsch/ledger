@@ -21,14 +21,16 @@ export function ConfirmModal({
 }: ConfirmModalProps) {
   return (
     <ModalShell open={open} title={title} onClose={onCancel}>
-      <p style={{ marginBottom: '16px', color: 'var(--color-text-secondary)' }}>{message}</p>
-      <div className="factions">
-        <button className="btn-del" type="button" onClick={onConfirm}>
-          {confirmLabel}
-        </button>
-        <button className="btn-cancel" type="button" onClick={onCancel}>
-          {cancelLabel}
-        </button>
+      <div className="confirm-modal-content">
+        <p className="modal-message">{message}</p>
+        <div className="factions confirm-modal-actions">
+          <button className="btn-del" type="button" onClick={onConfirm}>
+            {confirmLabel}
+          </button>
+          <button className="btn-cancel" type="button" onClick={onCancel}>
+            {cancelLabel}
+          </button>
+        </div>
       </div>
     </ModalShell>
   );

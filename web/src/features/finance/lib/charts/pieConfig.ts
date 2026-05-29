@@ -8,6 +8,7 @@ import {
   CHART_COLORS,
 } from '../chartSeries.js';
 import { formatMoney } from '../utils.js';
+import { CHART_AXIS_COLOR, CHART_FONT, CHART_GRID_COLOR } from './chartTheme.js';
 
 export function hasPieChartData(monthView: MonthView, pieMode: PieMode): boolean {
   return buildPieChartConfig(monthView, pieMode) !== null;
@@ -46,7 +47,11 @@ export function buildPieChartConfig(monthView: MonthView, pieMode: PieMode) {
         maintainAspectRatio: false,
         indexAxis: 'y',
         plugins: {
-          legend: { display: true, position: 'bottom' },
+          legend: {
+            display: true,
+            position: 'bottom',
+            labels: { color: CHART_AXIS_COLOR, font: CHART_FONT, boxWidth: 10, boxHeight: 10 },
+          },
           tooltip: {
             callbacks: {
               label: (ctx: { raw: number; dataset: { label: string } }) =>
@@ -58,10 +63,18 @@ export function buildPieChartConfig(monthView: MonthView, pieMode: PieMode) {
         scales: {
           x: {
             stacked: true,
-            grid: { color: 'rgba(0,0,0,.05)' },
-            ticks: { callback: (v: number) => formatMoney(v), font: { size: 10 } },
+            grid: { color: CHART_GRID_COLOR },
+            ticks: {
+              callback: (v: number) => formatMoney(v),
+              color: CHART_AXIS_COLOR,
+              font: CHART_FONT,
+            },
           },
-          y: { stacked: true, ticks: { font: { size: 10 } }, grid: { display: false } },
+          y: {
+            stacked: true,
+            ticks: { color: CHART_AXIS_COLOR, font: CHART_FONT },
+            grid: { display: false },
+          },
         },
       },
     };

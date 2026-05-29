@@ -6,6 +6,7 @@ import type {
   MonthOverride,
   Revenue,
   Settings,
+  VariableExpense,
 } from '../domain/types.js';
 import type { IFinanceRepository } from './financeRepository.js';
 import { emptyFinanceState, financeSchemaVersion } from './schema.js';
@@ -23,6 +24,7 @@ interface MetaRow {
 
 class FinanceDatabase extends Dexie {
   fixedExpenses!: Table<FixedExpense>;
+  variableExpenses!: Table<VariableExpense>;
   installments!: Table<Installment>;
   revenues!: Table<Revenue>;
   monthOverrides!: Table<MonthOverride>;
@@ -33,6 +35,7 @@ class FinanceDatabase extends Dexie {
     super('controle-financeiro-v2-db');
     this.version(1).stores({
       fixedExpenses: 'id,active,startMonth,endMonth',
+      variableExpenses: 'id,monthKey,date,paymentMethod,card,paid',
       installments: 'id,active,startMonth,closedAt',
       revenues: 'id,active,startMonth,endMonth',
       monthOverrides: 'id,type,itemId,monthKey',
@@ -45,6 +48,17 @@ class FinanceDatabase extends Dexie {
 
     this.version(3).stores({
       fixedExpenses: 'id,active,startMonth,endMonth',
+      variableExpenses: 'id,monthKey,date,paymentMethod,card,paid',
+      installments: 'id,active,startMonth,closedAt',
+      revenues: 'id,active,startMonth,endMonth',
+      monthOverrides: 'id,type,itemId,monthKey',
+      settings: 'key',
+      meta: 'key',
+    });
+
+    this.version(5).stores({
+      fixedExpenses: 'id,active,startMonth,endMonth',
+      variableExpenses: 'id,monthKey,date,paymentMethod,card,paid',
       installments: 'id,active,startMonth,closedAt',
       revenues: 'id,active,startMonth,endMonth',
       monthOverrides: 'id,type,itemId,monthKey',
@@ -62,15 +76,23 @@ class DexieFinanceRepository implements IFinanceRepository {
   }
 
   async loadState(): Promise<ReturnType<typeof emptyFinanceState>> {
-    const [fixedExpenses, installments, revenues, monthOverrides, settingsRows, metaRows] =
-      await Promise.all([
-        this.db.fixedExpenses.toArray(),
-        this.db.installments.toArray(),
-        this.db.revenues.toArray(),
-        this.db.monthOverrides.toArray(),
-        this.db.settings.toArray(),
-        this.db.meta.toArray(),
-      ]);
+    const [
+      fixedExpenses,
+      variableExpenses,
+      installments,
+      revenues,
+      monthOverrides,
+      settingsRows,
+      metaRows,
+    ] = await Promise.all([
+      this.db.fixedExpenses.toArray(),
+      this.db.variableExpenses.toArray(),
+      this.db.installments.toArray(),
+      this.db.revenues.toArray(),
+      this.db.monthOverrides.toArray(),
+      this.db.settings.toArray(),
+      this.db.meta.toArray(),
+    ]);
 
     const settings = settingsRows.reduce(
       (acc, row) => ({ ...acc, [row.key]: row.value }),
@@ -90,6 +112,7 @@ class DexieFinanceRepository implements IFinanceRepository {
       ...clone(defaultState),
       currentDate,
       fixedExpenses,
+      variableExpenses,
       installments,
       revenues,
       monthOverrides,
@@ -110,6 +133,7 @@ class DexieFinanceRepository implements IFinanceRepository {
       'rw',
       [
         this.db.fixedExpenses,
+        this.db.variableExpenses,
         this.db.installments,
         this.db.revenues,
         this.db.monthOverrides,
@@ -136,6 +160,7 @@ class DexieFinanceRepository implements IFinanceRepository {
         }
 
         await syncTable(this.db.fixedExpenses, payload.fixedExpenses);
+        await syncTable(this.db.variableExpenses, payload.variableExpenses);
         await syncTable(this.db.installments, payload.installments);
         await syncTable(this.db.revenues, payload.revenues);
         await syncTable(this.db.monthOverrides, payload.monthOverrides);

@@ -1,10 +1,9 @@
 import type { ChangeEvent, Dispatch, SetStateAction } from 'react';
 import type { CardBillItem } from '../../../domain/types';
-import { buildCardIconMap } from '../../../lib/cardIconMap';
 import { useI18n } from '../../../lib/i18n';
 import { applyMoneyMask } from '../../../lib/moneyInput';
-import { CATEGORIES, ICONS } from '../../../ui/constants';
-import { Input, SelectWithIcon } from '../../inputs';
+import { CATEGORIES } from '../../../ui/constants';
+import { Input } from '../../inputs';
 
 export type FixedExpenseFormState = {
   name: string;
@@ -59,7 +58,6 @@ function buildCardOptions(
 export function FixedExpenseForm({ form, setForm, cards }: FixedExpenseFormProps) {
   const { normalizeCardName } = useI18n();
   const paymentOptions = buildPaymentOptions(cards, form.paymentMethod, normalizeCardName);
-  const cardIconMap = buildCardIconMap(cards);
   const cardOptions = buildCardOptions(cards, form.card, normalizeCardName);
 
   return (
@@ -108,28 +106,36 @@ export function FixedExpenseForm({ form, setForm, cards }: FixedExpenseFormProps
       <div className="form-grid">
         <label className="field">
           <span>Forma de pagamento</span>
-          <SelectWithIcon
+          <select
             value={form.paymentMethod}
             onChange={(e: ChangeEvent<HTMLSelectElement>) =>
               setForm((prev) => ({ ...prev, paymentMethod: e.target.value }))
             }
-            options={paymentOptions}
-            iconMap={{ ...ICONS, ...cardIconMap }}
-            ariaLabel="Forma de pagamento"
-          />
+            aria-label="Forma de pagamento"
+          >
+            {paymentOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </label>
         {form.paymentMethod === 'cartao' ? (
           <label className="field">
             <span>Cartão</span>
-            <SelectWithIcon
+            <select
               value={form.card}
               onChange={(e: ChangeEvent<HTMLSelectElement>) =>
                 setForm((prev) => ({ ...prev, card: e.target.value }))
               }
-              options={cardOptions}
-              iconMap={cardIconMap}
-              ariaLabel="Cartão"
-            />
+              aria-label="Cartão"
+            >
+              {cardOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </label>
         ) : null}
         <label className="field">

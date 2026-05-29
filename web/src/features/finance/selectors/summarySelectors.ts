@@ -9,6 +9,7 @@ import type {
   MonthView,
   MonthViewFixedExpense,
   MonthViewInstallment,
+  MonthViewVariableExpense,
   Revenue,
 } from '../domain/types.js';
 
@@ -38,6 +39,12 @@ export function buildTrackedCardBills(monthView: MonthView): Record<string, numb
 
   monthView.fixedExpenses.forEach((item) => {
     const card = getExpenseCard(item as MonthViewFixedExpense);
+    if (!card) return;
+    trackedCardBills[card] = (trackedCardBills[card] || 0) + Number(item.amount || 0);
+  });
+
+  (monthView.variableExpenses || []).forEach((item) => {
+    const card = getExpenseCard(item as MonthViewVariableExpense);
     if (!card) return;
     trackedCardBills[card] = (trackedCardBills[card] || 0) + Number(item.amount || 0);
   });
@@ -88,12 +95,23 @@ export function markBillAsPaid(
   cardBills: Record<string, number> | null | undefined,
   fixedExpenses: MonthViewFixedExpense[],
   installments: MonthViewInstallment[],
-  billPaymentMap: Record<string, boolean>
+  billPaymentMap: Record<string, boolean>,
+  variableExpenses: MonthViewVariableExpense[] = []
 ): void {
-  // Marcar gastos fixos como pagos
+  // Marcar despesas fixas como pagas
   fixedExpenses.forEach((expense) => {
     let card = getExpenseCard(expense);
     // fallback: some test fixtures / legacy items may set `card` directly
+    if (!card && (expense as any).card) {
+      card = (expense as any).card as BillCard;
+    }
+    if (card === cardKey && !expense.paid) {
+      expense.paid = true;
+    }
+  });
+
+  variableExpenses.forEach((expense) => {
+    let card = getExpenseCard(expense);
     if (!card && (expense as any).card) {
       card = (expense as any).card as BillCard;
     }
@@ -143,13 +161,19 @@ export function buildSummaryData(
   currentMonthKey: string,
   cardList?: { key: string; label: string }[]
 ): SummaryData {
-  const { fixedExpenses, installments, revenues, totals } = monthView;
+  const { fixedExpenses, variableExpenses = [], installments, revenues, totals } = monthView;
 
   const billPaymentMap = buildBillPaymentMap(monthOverrides, currentMonthKey);
 
   const fixedExpensesByCard: Record<BillCard, number> = {} as Record<BillCard, number>;
   fixedExpenses.forEach((item) => {
     const card = getExpenseCard(item as MonthViewFixedExpense);
+    if (!card) return;
+    fixedExpensesByCard[card] = (fixedExpensesByCard[card] || 0) + Number(item.amount || 0);
+  });
+
+  variableExpenses.forEach((item) => {
+    const card = getExpenseCard(item as MonthViewVariableExpense);
     if (!card) return;
     fixedExpensesByCard[card] = (fixedExpensesByCard[card] || 0) + Number(item.amount || 0);
   });
@@ -163,10 +187,19 @@ export function buildSummaryData(
   const fixedExpensesNonCard = fixedExpenses
     .filter((item) => !getExpenseCard(item as MonthViewFixedExpense))
     .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const variableExpensesNonCard = variableExpenses
+    .filter((item) => !getExpenseCard(item as MonthViewVariableExpense))
+    .reduce((sum, item) => sum + Number(item.amount || 0), 0);
 
   const fixedExpensesPaidByCard: Record<BillCard, number> = {} as Record<BillCard, number>;
   fixedExpenses.forEach((item) => {
     const card = getExpenseCard(item as MonthViewFixedExpense);
+    if (!card || item.paid !== true) return;
+    fixedExpensesPaidByCard[card] = (fixedExpensesPaidByCard[card] || 0) + Number(item.amount || 0);
+  });
+
+  variableExpenses.forEach((item) => {
+    const card = getExpenseCard(item as MonthViewVariableExpense);
     if (!card || item.paid !== true) return;
     fixedExpensesPaidByCard[card] = (fixedExpensesPaidByCard[card] || 0) + Number(item.amount || 0);
   });
@@ -181,6 +214,9 @@ export function buildSummaryData(
 
   const fixedExpensesNonCardPaid = fixedExpenses
     .filter((item) => !getExpenseCard(item as MonthViewFixedExpense) && item.paid === true)
+    .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const variableExpensesNonCardPaid = variableExpenses
+    .filter((item) => !getExpenseCard(item as MonthViewVariableExpense) && item.paid === true)
     .reduce((sum, item) => sum + Number(item.amount || 0), 0);
 
   // Include all cards: those with fixed/installments AND those with bills
@@ -212,8 +248,9 @@ export function buildSummaryData(
     cardPaidExpenses += trackedCardPaidExpenses;
   });
 
-  const despesasBrutas = fixedExpensesNonCard + cardGrossExpenses;
-  const despesasPagasBrutas = fixedExpensesNonCardPaid + cardPaidExpenses;
+  const despesasBrutas = fixedExpensesNonCard + variableExpensesNonCard + cardGrossExpenses;
+  const despesasPagasBrutas =
+    fixedExpensesNonCardPaid + variableExpensesNonCardPaid + cardPaidExpenses;
   const aPagar = Math.max(0, despesasBrutas - despesasPagasBrutas);
   const saldo = totals.receitas - despesasPagasBrutas;
   const saldoPrevisto = totals.receitas - despesasBrutas;
