@@ -1,10 +1,10 @@
 ---
 id: TASK-2
 title: Inicializar projeto frontend React com Vite e TypeScript
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-10-11 17:37'
-updated_date: '2026-10-11 17:39'
+updated_date: '2026-10-12 19:33'
 labels:
   - setup
   - frontend
@@ -13,7 +13,6 @@ priority: high
 type: task
 ordinal: 2000
 ---
-
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->

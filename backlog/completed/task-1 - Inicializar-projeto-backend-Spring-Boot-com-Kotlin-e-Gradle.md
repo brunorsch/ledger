@@ -1,10 +1,10 @@
 ---
 id: TASK-1
 title: Inicializar projeto backend Spring Boot com Kotlin e Gradle
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-10-11 17:37'
-updated_date: '2026-10-11 17:45'
+updated_date: '2026-10-12 19:32'
 labels:
   - setup
   - backend
@@ -13,7 +13,6 @@ priority: high
 type: task
 ordinal: 1000
 ---
-
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
