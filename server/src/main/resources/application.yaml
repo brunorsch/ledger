@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: ledger-server
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
