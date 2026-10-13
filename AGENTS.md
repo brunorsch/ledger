@@ -33,8 +33,9 @@ Gradle multiprojeto (módulos `web` e `server`). O artefato final é um único J
 - Dinheiro: tipo `Money` (value class sobre `BigDecimal`, escala 2), `NUMERIC(14,2)` no banco. Nunca `Double` ou `Float`. Um único modo de arredondamento, aplicado no domínio (o banco não arredonda). A API envia e recebe valores como string. Reservas = restante − essenciais − lazer.
 - Persistência: Spring Data JDBC, sem JPA/Hibernate. Domínio imutável (`data class` e `copy`). Agregados pequenos, com referência entre agregados por id (`AggregateReference`). Telas de leitura usam SQL ou projeção, sem montar agregados.
 - Schema só por migração Flyway em `backend/src/main/resources/db/migration` (`V<n>__descricao.sql`). Nunca edite uma migração já aplicada: crie outra.
-- Toda tabela de dados do usuário tem `user_id`.
-- O snapshot de parâmetros de cada mês tem `schemaVersion`.
+- Toda tabela de dados do usuário tem `usuario_id`.
+- IDs internos de banco são `bigint` (identity) e nunca saem do backend. Entidades expostas ao front têm `id_publico` UUID, único e gerado pela aplicação, usado em rotas e payloads da API; chaves estrangeiras referenciam o id interno.
+- O snapshot de parâmetros de cada mês tem `versao_esquema`.
 - O passado não muda: cada mês guarda seus lançamentos concretos, o modelo de gastos fixos só gera cópias quando um mês é criado, e os parâmetros ficam gravados no mês na criação.
 - Não monte pilha de observabilidade além do que a task pedir.
 - Utilizar métodos de classes ao invés de funções top-level quando o comportamento estiver relacionado a uma classe específica. Funções top-level são permitidas para utilitários gerais, mas evite criar funções globais desnecessárias.
