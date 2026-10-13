@@ -36,6 +36,8 @@ Gradle multiprojeto (módulos `web` e `server`). O artefato final é um único J
 - O snapshot de parâmetros de cada mês tem `schemaVersion`.
 - O passado não muda: cada mês guarda seus lançamentos concretos, o modelo de gastos fixos só gera cópias quando um mês é criado, e os parâmetros ficam gravados no mês na criação.
 - Não monte pilha de observabilidade além do que a task pedir.
+- Utilizar métodos de classes ao invés de funções top-level quando o comportamento estiver relacionado a uma classe específica. Funções top-level são permitidas para utilitários gerais, mas evite criar funções globais desnecessárias.
+- Criar uma classe por arquivo, com o mesmo nome do arquivo. Evitar arquivos com múltiplas classes, exceto para classes internas ou pequenas classes auxiliares.
 
 ## Frontend
 

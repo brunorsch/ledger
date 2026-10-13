@@ -34,13 +34,13 @@ class DinheiroTest {
 	// AC #3: HALF_UP no somar (e na normalização da criação).
 	@Test
 	fun `somar arredonda com HALF_UP`() {
-		val resultado = Dinheiro("0.125").somar(Dinheiro("0"))
+		val resultado = Dinheiro("0.125").sum(Dinheiro("0"))
 		assertEquals(0, resultado.compareTo(Dinheiro("0.13")))
 	}
 
 	@Test
 	fun `somar soma valores positivos`() {
-		assertEquals(0, Dinheiro("10.00").somar(Dinheiro("0.25")).compareTo(Dinheiro("10.25")))
+		assertEquals(0, Dinheiro("10.00").sum(Dinheiro("0.25")).compareTo(Dinheiro("10.25")))
 	}
 
 	@Test
@@ -61,8 +61,8 @@ class DinheiroTest {
 
 	@Test
 	fun `subtrair rejeita resultado negativo`() {
-		assertEquals(0, Dinheiro("10.00").subtrair(Dinheiro("3.25")).compareTo(Dinheiro("6.75")))
-		assertFailsWith<IllegalArgumentException> { Dinheiro("1.00").subtrair(Dinheiro("2.00")) }
+		assertEquals(0, Dinheiro("10.00").subtract(Dinheiro("3.25")).compareTo(Dinheiro("6.75")))
+		assertFailsWith<IllegalArgumentException> { Dinheiro("1.00").subtract(Dinheiro("2.00")) }
 	}
 
 	// AC #5: factory explícita para sinal negativo (ex.: déficit do mês).
@@ -89,12 +89,26 @@ class DinheiroTest {
 	// Operações restantes (plus/minus/times/divideBy das notas técnicas).
 	@Test
 	fun `multiplicarPor normaliza com HALF_UP`() {
-		assertEquals(0, Dinheiro("1.11").multiplicarPor(BigDecimal("2.5")).compareTo(Dinheiro("2.78")))
+		assertEquals(0, Dinheiro("1.11").multiply(BigDecimal("2.5")).compareTo(Dinheiro("2.78")))
 	}
 
 	@Test
 	fun `dividirPor usa a escala informada com HALF_UP e normaliza`() {
 		assertEquals(0, Dinheiro("10.00").dividirPor(BigDecimal("3"), 2).compareTo(Dinheiro("3.33")))
 		assertEquals(0, Dinheiro("1.00").dividirPor(BigDecimal("8"), 2).compareTo(Dinheiro("0.13")))
+	}
+
+	@Test
+	fun `min retorna o menor entre dois Dinheiro`() {
+		assertEquals(0, Dinheiro("10.00").min(Dinheiro("20.00")).compareTo(Dinheiro("10.00")))
+		assertEquals(0, Dinheiro("20.00").min(Dinheiro("10.00")).compareTo(Dinheiro("10.00")))
+		assertEquals(0, Dinheiro("10.00").min(Dinheiro("10.00")).compareTo(Dinheiro("10.00")))
+	}
+
+	@Test
+	fun `abs devolve Dinheiro nao negativo igual ao valor absoluto`() {
+		assertEquals(0, Dinheiro("5.00").abs().compareTo(Dinheiro("5.00")))
+		assertEquals(0, Dinheiro.ZERO.abs().compareTo(Dinheiro.ZERO))
+		assertEquals(0, Dinheiro.allowNegative("-5.00").abs().compareTo(Dinheiro("5.00")))
 	}
 }

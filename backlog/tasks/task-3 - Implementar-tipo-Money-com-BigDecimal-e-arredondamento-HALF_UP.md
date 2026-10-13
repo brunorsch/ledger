@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@brunorsch'
 created_date: '2026-10-11 17:37'
-updated_date: '2026-10-12 20:01'
+updated_date: '2026-10-12 20:50'
 labels:
   - domain
   - backend
@@ -51,10 +51,10 @@ Notas técnicas:
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Criar value class Dinheiro em server/src/main/kotlin/br/dev/brunorsch/ledger/server/dominio/Dinheiro.kt com invariante não-negativa, factory Dinheiro.allowNegative para sinal, ZERO singleton, aritmética (somar, subtrair, multiplicarPor, dividirPor) com HALF_UP e escala 2.
-2. Criar testes unitários em server/src/test/kotlin/br/dev/brunorsch/ledger/server/dominio/DinheiroTestes.kt cobrindo todos os 7 critérios de aceite (normalização de escala, compareTo vs equals, arredondamento HALF_UP no somar, rejeição de negativo no construtor, factory allowNegative, ZERO singleton).
-3. Adicionar JUnit Jupiter (Kotlin test-junit5 já presente) e plugin jacoco se necessário; rodar ./gradlew :server:test até passar.
-4. Commit referenciando TASK-3.
+1. Criar value class Dinheiro (server/src/main/kotlin/.../dominio/Dinheiro.kt) com construtor interno (Long centavos), companion factories para String/BigDecimal/Int, ZERO singleton, allowNegative.
+2. Operações: somar, subtrair, multiplicar(BigDecimal), dividir(divisor, escala), abs, unaryMinus, compareTo, toString. HALF_UP em todos.
+3. Testes unitários cobrindo AC 1-7 com 100% de cobertura.
+4. Validar com ./gradlew :server:test --tests DinheiroTest.
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes

@@ -24,20 +24,26 @@ value class Dinheiro private constructor(val valor: BigDecimal) : Comparable<Din
 	override fun compareTo(outro: Dinheiro): Int = valor.compareTo(outro.valor)
 
 	/** Soma e normaliza o resultado com HALF_UP. */
-	fun somar(outro: Dinheiro): Dinheiro = Dinheiro.criar(valor.add(outro.valor))
+	fun sum(outro: Dinheiro): Dinheiro = Dinheiro.criar(valor.add(outro.valor))
 
 	/**
 	 * Subtrai e normaliza o resultado com HALF_UP. Lança [IllegalArgumentException]
 	 * se o resultado for negativo; use [allowNegative] para representar déficit.
 	 */
-	fun subtrair(outro: Dinheiro): Dinheiro = Dinheiro.criar(valor.subtract(outro.valor))
+	fun subtract(outro: Dinheiro): Dinheiro = Dinheiro.criar(valor.subtract(outro.valor))
 
 	/** Multiplica por um fator e normaliza o resultado com HALF_UP. */
-	fun multiplicarPor(fator: BigDecimal): Dinheiro = Dinheiro.criar(valor.multiply(fator))
+	fun multiply(fator: BigDecimal): Dinheiro = Dinheiro.criar(valor.multiply(fator))
 
 	/** Divide por um divisor com a [escala] informada e HALF_UP, normalizando o resultado. */
-	fun dividirPor(divisor: BigDecimal, escala: Int): Dinheiro =
+	fun divide(divisor: BigDecimal, escala: Int): Dinheiro =
 		Dinheiro.criar(valor.divide(divisor, escala, RoundingMode.HALF_UP))
+
+	/** Menor entre este e [outro] (não os modifica). */
+	fun min(outro: Dinheiro): Dinheiro = if (compareTo(outro) <= 0) this else outro
+
+	/** Valor absoluto como [Dinheiro] não-negativo. */
+	fun abs(): Dinheiro = if (compareTo(Dinheiro.ZERO) < 0) Dinheiro(valor.negate()) else this
 
 	companion object {
 
