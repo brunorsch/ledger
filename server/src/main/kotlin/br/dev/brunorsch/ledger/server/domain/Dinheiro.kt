@@ -32,6 +32,14 @@ value class Dinheiro private constructor(val valor: BigDecimal) : Comparable<Din
 	 */
 	fun subtract(outro: Dinheiro): Dinheiro = Dinheiro.criar(valor.subtract(outro.valor))
 
+	/**
+	 * Subtrai admitindo resultado negativo (ex.: déficit do mês). Normaliza o
+	 * resultado com HALF_UP. Use [subtract] quando quiser preservar a invariante
+	 * não-negativa do tipo.
+	 */
+	fun subtractAllowingNegative(outro: Dinheiro): Dinheiro =
+		Dinheiro.allowNegative(valor.subtract(outro.valor))
+
 	/** Multiplica por um fator e normaliza o resultado com HALF_UP. */
 	fun multiply(fator: BigDecimal): Dinheiro = Dinheiro.criar(valor.multiply(fator))
 

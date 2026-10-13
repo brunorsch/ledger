@@ -28,6 +28,7 @@ Gradle multiprojeto (módulos `web` e `server`). O artefato final é um único J
 ## Regras de código
 
 - Código limpo, legível por humanos e sem abstração especulativa. Faça só o que a task pede.
+- O código limpo também deve ser considerado para testes. Evitando duplicações, usando nomes claros, setup/teardown, etc.
 - Domínio puro: o cálculo do sumário e da distribuição das sobras não depende do Spring.
 - Dinheiro: tipo `Money` (value class sobre `BigDecimal`, escala 2), `NUMERIC(14,2)` no banco. Nunca `Double` ou `Float`. Um único modo de arredondamento, aplicado no domínio (o banco não arredonda). A API envia e recebe valores como string. Reservas = restante − essenciais − lazer.
 - Persistência: Spring Data JDBC, sem JPA/Hibernate. Domínio imutável (`data class` e `copy`). Agregados pequenos, com referência entre agregados por id (`AggregateReference`). Telas de leitura usam SQL ou projeção, sem montar agregados.
@@ -42,6 +43,7 @@ Gradle multiprojeto (módulos `web` e `server`). O artefato final é um único J
 - Ex: Packages `domain`, `controller`, `repository`, `service`, `dto`, `exception`, `config`, etc. podem ser mantidos em inglês
 - Sufixo de classes como `Controller`, `Repository`, `Service`, `DTO`, `Exception` podem ser mantidos em inglês 
 - Terminologia em inglês que são padrão como `get`, `set`, `unwrap`, `toString`, `equals`, `hashCode`, `compareTo`, `copy`, etc. podem ser mantidos em inglês
+- Separação de testes em Arrange, Act e Assert, mas sem explicitar com comentários. Deixando uma linha em branco para separar cada etapa.
 
 ## Frontend
 

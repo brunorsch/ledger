@@ -1,7 +1,7 @@
 package br.dev.brunorsch.ledger.server.domain
 
+import org.assertj.core.api.Assertions.assertThat
 import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class DistribuicaoSobrasTest {
@@ -9,20 +9,22 @@ class DistribuicaoSobrasTest {
 	// AC #1: exemplos numéricos do projeto.
 	@Test
 	fun `restante 1193,08 com alternancias padrao`() {
-		val d = DistribuicaoSobras.calcular(Dinheiro("1193.08"))
-		assertEquals(0, d.essenciais.compareTo(Dinheiro("596.54")))
-		assertEquals(0, d.lazer.compareTo(Dinheiro("357.92")))
-		assertEquals(0, d.reservas.compareTo(Dinheiro("238.62")))
-		assertEquals(0, d.deficit.compareTo(Dinheiro.ZERO))
+		val resultado = DistribuicaoSobras.calcular(Dinheiro("1193.08"))
+
+		assertThat(resultado.essenciais).isEqualByComparingTo(Dinheiro("596.54"))
+		assertThat(resultado.lazer).isEqualByComparingTo(Dinheiro("357.92"))
+		assertThat(resultado.reservas).isEqualByComparingTo(Dinheiro("238.62"))
+		assertThat(resultado.deficit).isEqualByComparingTo(Dinheiro.ZERO)
 	}
 
 	@Test
 	fun `restante 7872,34 com alternancias padrao`() {
-		val d = DistribuicaoSobras.calcular(Dinheiro("7872.34"))
-		assertEquals(0, d.essenciais.compareTo(Dinheiro("1300.00")))
-		assertEquals(0, d.lazer.compareTo(Dinheiro("700.00")))
-		assertEquals(0, d.reservas.compareTo(Dinheiro("5872.34")))
-		assertEquals(0, d.deficit.compareTo(Dinheiro.ZERO))
+		val resultado = DistribuicaoSobras.calcular(Dinheiro("7872.34"))
+
+		assertThat(resultado.essenciais).isEqualByComparingTo(Dinheiro("1300.00"))
+		assertThat(resultado.lazer).isEqualByComparingTo(Dinheiro("700.00"))
+		assertThat(resultado.reservas).isEqualByComparingTo(Dinheiro("5872.34"))
+		assertThat(resultado.deficit).isEqualByComparingTo(Dinheiro.ZERO)
 	}
 
 	// AC #2: soma sempre fecha no restante.
@@ -35,15 +37,13 @@ class DistribuicaoSobrasTest {
 			true to false,
 			false to false,
 		)
+
 		for (r in restantes) {
 			for ((investir, lazer) in combinacoes) {
-				val d = DistribuicaoSobras.calcular(Dinheiro(r), investir = investir, lazer = lazer)
-				val soma = d.essenciais.sum(d.lazer).sum(d.reservas)
-				assertEquals(
-					0,
-					soma.compareTo(Dinheiro(r)),
-					"restante=$r investir=$investir lazer=$lazer: soma=$soma"
-				)
+				val resultado = DistribuicaoSobras.calcular(Dinheiro(r), investir = investir, lazer = lazer)
+				val soma = resultado.essenciais.sum(resultado.lazer).sum(resultado.reservas)
+
+				assertThat(soma).isEqualByComparingTo(Dinheiro(r))
 			}
 		}
 	}
@@ -51,29 +51,33 @@ class DistribuicaoSobrasTest {
 	// AC #3: restante == 0 → tudo zero, déficit zero.
 	@Test
 	fun `restante zero distribui zero em todas as categorias e deficit zero`() {
-		val d = DistribuicaoSobras.calcular(Dinheiro.ZERO)
-		assertEquals(0, d.essenciais.compareTo(Dinheiro.ZERO))
-		assertEquals(0, d.lazer.compareTo(Dinheiro.ZERO))
-		assertEquals(0, d.reservas.compareTo(Dinheiro.ZERO))
-		assertEquals(0, d.deficit.compareTo(Dinheiro.ZERO))
+		val resultado = DistribuicaoSobras.calcular(Dinheiro.ZERO)
+
+		assertThat(resultado.essenciais).isEqualByComparingTo(Dinheiro.ZERO)
+		assertThat(resultado.lazer).isEqualByComparingTo(Dinheiro.ZERO)
+		assertThat(resultado.reservas).isEqualByComparingTo(Dinheiro.ZERO)
+		assertThat(resultado.deficit).isEqualByComparingTo(Dinheiro.ZERO)
 	}
 
 	// AC #4: restante < 0 → tudo zero, déficit = |restante|.
 	@Test
 	fun `restante negativo expoe deficit igual ao valor absoluto e zera categorias`() {
-		val d = DistribuicaoSobras.calcular(Dinheiro.allowNegative("-100.00"))
-		assertEquals(0, d.essenciais.compareTo(Dinheiro.ZERO))
-		assertEquals(0, d.lazer.compareTo(Dinheiro.ZERO))
-		assertEquals(0, d.reservas.compareTo(Dinheiro.ZERO))
-		assertEquals(0, d.deficit.compareTo(Dinheiro("100.00")))
+		val resultado = DistribuicaoSobras.calcular(Dinheiro.allowNegative("-100.00"))
+
+		assertThat(resultado.essenciais).isEqualByComparingTo(Dinheiro.ZERO)
+		assertThat(resultado.lazer).isEqualByComparingTo(Dinheiro.ZERO)
+		assertThat(resultado.reservas).isEqualByComparingTo(Dinheiro.ZERO)
+		assertThat(resultado.deficit).isEqualByComparingTo(Dinheiro("100.00"))
 	}
 
 	@Test
 	fun `deficit usa o valor absoluto do restante negativo em varios cenarios`() {
 		val cenarios = listOf("-1.00", "-50.00", "-100.50", "-1193.08", "-7872.34")
+
 		for (negativo in cenarios) {
-			val d = DistribuicaoSobras.calcular(Dinheiro.allowNegative(negativo))
-			assertEquals(0, d.deficit.compareTo(Dinheiro(negativo.replace("-", ""))))
+			val resultado = DistribuicaoSobras.calcular(Dinheiro.allowNegative(negativo))
+
+			assertThat(resultado.deficit).isEqualByComparingTo(Dinheiro(negativo.replace("-", "")))
 		}
 	}
 
@@ -82,11 +86,12 @@ class DistribuicaoSobrasTest {
 	fun `investir false e lazer true redistribui flex 70 30 entre essenciais e lazer`() {
 		// restante 1193.08: flex = 596.54, 70% = 417.58 → ess; 30% = 178.96 → laz
 		// ess = 596.54 + 417.58 = 1014.12; laz = 178.96; reservas = 0
-		val d = DistribuicaoSobras.calcular(Dinheiro("1193.08"), investir = false, lazer = true)
-		assertEquals(0, d.essenciais.compareTo(Dinheiro("1014.12")))
-		assertEquals(0, d.lazer.compareTo(Dinheiro("178.96")))
-		assertEquals(0, d.reservas.compareTo(Dinheiro.ZERO))
-		assertEquals(0, d.deficit.compareTo(Dinheiro.ZERO))
+		val resultado = DistribuicaoSobras.calcular(Dinheiro("1193.08"), investir = false, lazer = true)
+
+		assertThat(resultado.essenciais).isEqualByComparingTo(Dinheiro("1014.12"))
+		assertThat(resultado.lazer).isEqualByComparingTo(Dinheiro("178.96"))
+		assertThat(resultado.reservas).isEqualByComparingTo(Dinheiro.ZERO)
+		assertThat(resultado.deficit).isEqualByComparingTo(Dinheiro.ZERO)
 	}
 
 	@Test
@@ -94,10 +99,11 @@ class DistribuicaoSobrasTest {
 		// restante 7872.34: restanteAposEssenciais = 6572.34; 30% desse valor excede 700,
 		// então lazer é capado em 700 e o excedente (5872.34) vai para essenciais.
 		// ess = 1300 + 5872.34 = 7172.34; reservas = 0.
-		val d = DistribuicaoSobras.calcular(Dinheiro("7872.34"), investir = false, lazer = true)
-		assertEquals(0, d.essenciais.compareTo(Dinheiro("7172.34")))
-		assertEquals(0, d.lazer.compareTo(Dinheiro("700.00")))
-		assertEquals(0, d.reservas.compareTo(Dinheiro.ZERO))
+		val resultado = DistribuicaoSobras.calcular(Dinheiro("7872.34"), investir = false, lazer = true)
+
+		assertThat(resultado.essenciais).isEqualByComparingTo(Dinheiro("7172.34"))
+		assertThat(resultado.lazer).isEqualByComparingTo(Dinheiro("700.00"))
+		assertThat(resultado.reservas).isEqualByComparingTo(Dinheiro.ZERO)
 	}
 
 	// AC #6: investir=true, lazer=false → flex 50/50 (ess/res), respeita limite de gastos.
@@ -105,35 +111,37 @@ class DistribuicaoSobrasTest {
 	fun `investir true e lazer false redistribui flex 50 50 entre essenciais e reservas`() {
 		// restante 1193.08: flex = 596.54, 50% = 298.27 → ess
 		// ess = min(596.54 + 298.27, 1300) = 894.81; reservas = 298.27
-		val d = DistribuicaoSobras.calcular(Dinheiro("1193.08"), investir = true, lazer = false)
-		assertEquals(0, d.essenciais.compareTo(Dinheiro("894.81")))
-		assertEquals(0, d.lazer.compareTo(Dinheiro.ZERO))
-		assertEquals(0, d.reservas.compareTo(Dinheiro("298.27")))
+		val resultado = DistribuicaoSobras.calcular(Dinheiro("1193.08"), investir = true, lazer = false)
+
+		assertThat(resultado.essenciais).isEqualByComparingTo(Dinheiro("894.81"))
+		assertThat(resultado.lazer).isEqualByComparingTo(Dinheiro.ZERO)
+		assertThat(resultado.reservas).isEqualByComparingTo(Dinheiro("298.27"))
 	}
 
 	@Test
 	fun `investir true e lazer false aplica cap de essenciais 1300`() {
 		// restante 7872.34: flex = 6572.34, 50% = 3286.17 → ess capado em 1300
 		// reservas = 7872.34 - 1300 = 6572.34
-		val d = DistribuicaoSobras.calcular(Dinheiro("7872.34"), investir = true, lazer = false)
-		assertEquals(0, d.essenciais.compareTo(Dinheiro("1300.00")))
-		assertEquals(0, d.lazer.compareTo(Dinheiro.ZERO))
-		assertEquals(0, d.reservas.compareTo(Dinheiro("6572.34")))
+		val resultado = DistribuicaoSobras.calcular(Dinheiro("7872.34"), investir = true, lazer = false)
+
+		assertThat(resultado.essenciais).isEqualByComparingTo(Dinheiro("1300.00"))
+		assertThat(resultado.lazer).isEqualByComparingTo(Dinheiro.ZERO)
+		assertThat(resultado.reservas).isEqualByComparingTo(Dinheiro("6572.34"))
 	}
 
 	// AC #7: investir=false, lazer=false → tudo em essenciais, sem teto.
 	@Test
 	fun `investir false e lazer false aloca o restante todo em essenciais sem teto`() {
-		val d1 = DistribuicaoSobras.calcular(Dinheiro("1193.08"), investir = false, lazer = false)
-		assertEquals(0, d1.essenciais.compareTo(Dinheiro("1193.08")))
-		assertEquals(0, d1.lazer.compareTo(Dinheiro.ZERO))
-		assertEquals(0, d1.reservas.compareTo(Dinheiro.ZERO))
+		val resultado1 = DistribuicaoSobras.calcular(Dinheiro("1193.08"), investir = false, lazer = false)
+		val resultado2 = DistribuicaoSobras.calcular(Dinheiro("7872.34"), investir = false, lazer = false)
 
-		// Garante que o teto de 1300 não é aplicado.
-		val d2 = DistribuicaoSobras.calcular(Dinheiro("7872.34"), investir = false, lazer = false)
-		assertEquals(0, d2.essenciais.compareTo(Dinheiro("7872.34")))
-		assertEquals(0, d2.lazer.compareTo(Dinheiro.ZERO))
-		assertEquals(0, d2.reservas.compareTo(Dinheiro.ZERO))
+		assertThat(resultado1.essenciais).isEqualByComparingTo(Dinheiro("1193.08"))
+		assertThat(resultado1.lazer).isEqualByComparingTo(Dinheiro.ZERO)
+		assertThat(resultado1.reservas).isEqualByComparingTo(Dinheiro.ZERO)
+
+		assertThat(resultado2.essenciais).isEqualByComparingTo(Dinheiro("7872.34"))
+		assertThat(resultado2.lazer).isEqualByComparingTo(Dinheiro.ZERO)
+		assertThat(resultado2.reservas).isEqualByComparingTo(Dinheiro.ZERO)
 	}
 
 	// AC #8: a fábrica não expõe parâmetro para essenciais — a invariante
@@ -149,13 +157,12 @@ class DistribuicaoSobrasTest {
 			true to false,
 			false to false,
 		)
+
 		for (r in restantes) {
 			for ((investir, lazer) in combinacoes) {
-				val d = DistribuicaoSobras.calcular(Dinheiro(r), investir = investir, lazer = lazer)
-				assertTrue(
-					d.essenciais.compareTo(Dinheiro.ZERO) > 0,
-					"restante=$r investir=$investir lazer=$lazer: essenciais=${d.essenciais}"
-				)
+				val resultado = DistribuicaoSobras.calcular(Dinheiro(r), investir = investir, lazer = lazer)
+
+				assertTrue(resultado.essenciais.compareTo(Dinheiro.ZERO) > 0)
 			}
 		}
 	}
@@ -163,25 +170,28 @@ class DistribuicaoSobrasTest {
 	// AC #9: determinístico.
 	@Test
 	fun `calcular e deterministico nas mesmas entradas`() {
-		val r1 = DistribuicaoSobras.calcular(Dinheiro("1193.08"), investir = false, lazer = true)
-		val r2 = DistribuicaoSobras.calcular(Dinheiro("1193.08"), investir = false, lazer = true)
-		assertEquals(0, r1.essenciais.compareTo(r2.essenciais))
-		assertEquals(0, r1.lazer.compareTo(r2.lazer))
-		assertEquals(0, r1.reservas.compareTo(r2.reservas))
-		assertEquals(0, r1.deficit.compareTo(r2.deficit))
+		val resultado1 = DistribuicaoSobras.calcular(Dinheiro("1193.08"), investir = false, lazer = true)
+		val resultado2 = DistribuicaoSobras.calcular(Dinheiro("1193.08"), investir = false, lazer = true)
+
+		assertThat(resultado1.essenciais).isEqualByComparingTo(resultado2.essenciais)
+		assertThat(resultado1.lazer).isEqualByComparingTo(resultado2.lazer)
+		assertThat(resultado1.reservas).isEqualByComparingTo(resultado2.reservas)
+		assertThat(resultado1.deficit).isEqualByComparingTo(resultado2.deficit)
 	}
 
 	// Garantia extra: o déficit é Dinheiro não negativo.
 	@Test
 	fun `deficit e Dinheiro nao negativo`() {
-		val d = DistribuicaoSobras.calcular(Dinheiro.allowNegative("-50.00"))
-		assertTrue(d.deficit.compareTo(Dinheiro.ZERO) > 0)
-		assertEquals(0, d.deficit.compareTo(Dinheiro("50.00")))
+		val resultado = DistribuicaoSobras.calcular(Dinheiro.allowNegative("-50.00"))
+
+		assertTrue(resultado.deficit.compareTo(Dinheiro.ZERO) > 0)
+		assertThat(resultado.deficit).isEqualByComparingTo(Dinheiro("50.00"))
 	}
 
 	@Test
 	fun `categorias zeradas sao iguais a Dinheiro ZERO por compareTo`() {
-		val d = DistribuicaoSobras.calcular(Dinheiro("1193.08"), investir = true, lazer = false)
-		assertEquals(0, d.lazer.compareTo(Dinheiro.ZERO))
+		val resultado = DistribuicaoSobras.calcular(Dinheiro("1193.08"), investir = true, lazer = false)
+
+		assertThat(resultado.lazer).isEqualByComparingTo(Dinheiro.ZERO)
 	}
 }
