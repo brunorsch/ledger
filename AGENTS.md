@@ -38,6 +38,10 @@ Gradle multiprojeto (módulos `web` e `server`). O artefato final é um único J
 - Não monte pilha de observabilidade além do que a task pedir.
 - Utilizar métodos de classes ao invés de funções top-level quando o comportamento estiver relacionado a uma classe específica. Funções top-level são permitidas para utilitários gerais, mas evite criar funções globais desnecessárias.
 - Criar uma classe por arquivo, com o mesmo nome do arquivo. Evitar arquivos com múltiplas classes, exceto para classes internas ou pequenas classes auxiliares.
+- O código deve ser escrito com a terminologia em português, exceto quando se tratar de nomenclatura padrão de mercado. 
+- Ex: Packages `domain`, `controller`, `repository`, `service`, `dto`, `exception`, `config`, etc. podem ser mantidos em inglês
+- Sufixo de classes como `Controller`, `Repository`, `Service`, `DTO`, `Exception` podem ser mantidos em inglês 
+- Terminologia em inglês que são padrão como `get`, `set`, `unwrap`, `toString`, `equals`, `hashCode`, `compareTo`, `copy`, etc. podem ser mantidos em inglês
 
 ## Frontend
 

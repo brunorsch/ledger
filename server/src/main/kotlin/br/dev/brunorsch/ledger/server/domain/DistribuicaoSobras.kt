@@ -1,4 +1,4 @@
-package br.dev.brunorsch.ledger.server.dominio
+package br.dev.brunorsch.ledger.server.domain
 
 import java.math.BigDecimal
 

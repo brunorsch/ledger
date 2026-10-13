@@ -77,7 +77,7 @@ Fora do escopo:
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-Validação: ./gradlew :server:test --tests 'br.dev.brunorsch.ledger.server.dominio.*' → 28/28 passando. JaCoCo: DistribuicaoKt 0/30 linhas perdidas, Distribuicao 0/5, Alternancias 0/4, Dinheiro 0/6, Dinheiro.Companion 0/10. Suíte completa: 28/29 (1 falha pré-existente em LedgerApplicationTests.contextLoads por falta de DB_URL no ambiente).
+Validação: ./gradlew :server:test --tests 'br.dev.brunorsch.ledger.server.domain.*' → 28/28 passando. JaCoCo: DistribuicaoKt 0/30 linhas perdidas, Distribuicao 0/5, Alternancias 0/4, Dinheiro 0/6, Dinheiro.Companion 0/10. Suíte completa: 28/29 (1 falha pré-existente em LedgerApplicationTests.contextLoads por falta de DB_URL no ambiente).
 
 Algoritmo: restantes <= 0 → tudo zero, deficit=|restante|. Senão, base = min(50%R, 1300), flexPool = R - base. Branches: (T,T) regra padrão; (F,T) flex 70/30 ess/laz com cap laz 700; (T,F) flex 50/50 ess/res com cap ess 1300; (F,F) tudo em essenciais sem teto. HALF_UP em todas as etapas.
 
