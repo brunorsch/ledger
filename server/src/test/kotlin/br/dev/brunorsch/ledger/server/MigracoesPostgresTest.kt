@@ -51,13 +51,13 @@ class MigracoesPostgresTest : SuportePostgres() {
 	}
 
 	@Test
-	fun `tabela meses tem captura_parametros jsonb obrigatorio e FK para usuarios`() {
+	fun `tabela meses tem parametros_calculo jsonb obrigatorio e FK para usuarios`() {
 		val tipoCaptura = jdbcTemplate.queryForObject(
-			"SELECT data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'meses' AND column_name = 'captura_parametros'",
+			"SELECT data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'meses' AND column_name = 'parametros_calculo'",
 			String::class.java,
 		)
 		val capturaAnulavel = jdbcTemplate.queryForObject(
-			"SELECT is_nullable FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'meses' AND column_name = 'captura_parametros'",
+			"SELECT is_nullable FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'meses' AND column_name = 'parametros_calculo'",
 			String::class.java,
 		)
 		val fkUsuarios = jdbcTemplate.queryForObject(
@@ -191,10 +191,10 @@ class MigracoesPostgresTest : SuportePostgres() {
 	}
 
 	@Test
-	fun `mes com captura_parametros sem versao_esquema viola o check`() {
+	fun `mes com parametros_calculo sem versao_esquema viola o check`() {
 		assertThatThrownBy {
 			jdbcTemplate.update(
-				"INSERT INTO meses (id_publico, usuario_id, mes_referencia, captura_parametros) VALUES (gen_random_uuid(), 1, '2026-10-01', '{}')",
+				"INSERT INTO meses (id_publico, usuario_id, mes_referencia, parametros_calculo) VALUES (gen_random_uuid(), 1, '2026-10-01', '{}')",
 			)
 		}
 			.isInstanceOf(DataIntegrityViolationException::class.java)

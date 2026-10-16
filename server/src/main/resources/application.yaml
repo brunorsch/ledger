@@ -5,6 +5,9 @@ spring:
     url: ${DB_URL}
     username: ${DB_USER}
     password: ${DB_PASSWORD}
+  jackson:
+    deserialization:
+      use_big_decimal_for_floats: true
 
 management:
   endpoints:

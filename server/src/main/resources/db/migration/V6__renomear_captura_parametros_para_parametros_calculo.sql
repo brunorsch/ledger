@@ -1,0 +1,2 @@
+ALTER TABLE meses RENAME COLUMN captura_parametros TO parametros_calculo;
+ALTER TABLE meses RENAME CONSTRAINT ck_meses_captura_versao_esquema TO ck_meses_parametros_calculo_versao_esquema;

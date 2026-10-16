@@ -26,7 +26,7 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("tools.jackson.module:jackson-module-kotlin")
 
-	runtimeOnly("org.postgresql:postgresql")
+	implementation("org.postgresql:postgresql")
 	runtimeOnly("org.flywaydb:flyway-database-postgresql")
 
 	// Testing
