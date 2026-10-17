@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@brunorsch'
 created_date: '2026-10-11 17:39'
-updated_date: '2026-10-17 21:21'
+updated_date: '2026-10-17 21:38'
 labels:
   - ui
   - frontend
@@ -64,6 +64,12 @@ Implementação da tela concluída (designer): App.tsx com 3 blocos (lançamento
 Decisão do usuário: backend na porta 9100 (application.yaml) e front dev na 9000 (vite.config.ts, proxy -> 9100). Verificação ponta a ponta refeita após a mudança: backend responde na 9100, proxy do Vite na 9000 entrega os 3 endpoints com contrato correto (dados de teste criados via API).
 
 Validação final (orquestrador, via DOM script no browser + backend real): cenário feliz 2026-10 (3 blocos, lançamentos com BRL e pago/não pago, sumário e distribuição corretos); déficit 2026-11 (4 linhas: essenciais/lazer/reservas zerados + Déficit R$ 500,00); loading capturado em voo; erro 404 com 'Tentar novamente' e retry re-executando as requests (mês passou a carregar após ser criado). Console do browser sem erros. Responsividade verificada manualmente pelo designer em 360px e 1024px. pnpm lint e pnpm build OK.
+
+Ajuste: card único de Lançamentos foi dividido em dois cards (Despesas em cima, Receitas abaixo), com filtros client-side, contadores separados, empty states específicos e leve destaque visual no card de despesas. Verificado com pnpm lint/build passando e screenshot do browser na porta 9000 mostrando a ordem correta dos itens para ?referencia=2026-10.
+
+Componentização: criado web/src/Caixa.tsx com props titulo, contagem?, nota?, destaque?, children. Refatorados CardLancamentos, BlocoSumario e BlocoDistribuicao para usar Caixa. Visual e comportamento preservados (split despesas/receitas, destaque sutil no card de despesas, nota de parâmetros na distribuição). Verificado pnpm lint/build passando; console do browser sem erros em http://localhost:9000/?referencia=2026-10. Screenshot não foi possível nesta rodada por indisponibilidade da janela do browser.
+
+Ajuste do usuário: componente renomeado Caixa -> Box (nomes comuns permanecem em inglês, conforme decision-2). Commit b384709.
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary
