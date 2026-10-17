@@ -1,6 +1,6 @@
 package br.dev.brunorsch.ledger.server
 
-import br.dev.brunorsch.ledger.server.controller.MesController
+import br.dev.brunorsch.ledger.server.service.UsuarioAutenticadoService
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -225,7 +225,7 @@ class MesSumarioApiTest : SuportePostgres() {
 			.andExpect { status { isNotFound() } }
 
 		mockMvc.get("/api/v1/meses/$id/sumario") {
-			header(MesController.HEADER_USUARIO_ID, "2")
+			header(UsuarioAutenticadoService.HEADER_USUARIO_ID, "2")
 		}
 			.andExpect { status { isNotFound() } }
 	}

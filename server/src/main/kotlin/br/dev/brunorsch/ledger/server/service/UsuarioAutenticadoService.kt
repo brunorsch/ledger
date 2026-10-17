@@ -28,6 +28,8 @@ class UsuarioAutenticadoService(private val jdbcTemplate: JdbcTemplate) {
 	}
 
 	companion object {
+		const val HEADER_USUARIO_ID = "X-Usuario-Id"
+
 		private const val ID_USUARIO_SEED = 1L
 	}
 }

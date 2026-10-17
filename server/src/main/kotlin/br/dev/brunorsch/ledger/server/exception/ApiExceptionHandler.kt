@@ -12,6 +12,10 @@ class ApiExceptionHandler {
 	fun tratarMesNaoEncontrado(ex: MesNaoEncontradoException): ResponseEntity<ErroResponse> =
 		ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErroResponse(ex.message!!))
 
+	@ExceptionHandler(LancamentoNaoEncontradoException::class)
+	fun tratarLancamentoNaoEncontrado(ex: LancamentoNaoEncontradoException): ResponseEntity<ErroResponse> =
+		ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErroResponse(ex.message!!))
+
 	@ExceptionHandler(ValidacaoException::class)
 	fun tratarValidacao(ex: ValidacaoException): ResponseEntity<ErroResponse> =
 		ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ErroResponse(ex.message!!))

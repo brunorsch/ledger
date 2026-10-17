@@ -30,7 +30,7 @@ class MesController(
 	@PostMapping
 	fun criar(
 		@RequestBody request: CriarMesRequest,
-		@RequestHeader(name = HEADER_USUARIO_ID, required = false) usuarioIdHeader: Long?,
+		@RequestHeader(name = UsuarioAutenticadoService.HEADER_USUARIO_ID, required = false) usuarioIdHeader: Long?,
 	): ResponseEntity<MesResponse> {
 		val usuarioId = usuarioAutenticadoService.resolver(usuarioIdHeader)
 		val mes = mesService.criar(request, usuarioId)
@@ -40,7 +40,7 @@ class MesController(
 	@GetMapping("/{id}")
 	fun obterPorId(
 		@PathVariable id: UUID,
-		@RequestHeader(name = HEADER_USUARIO_ID, required = false) usuarioIdHeader: Long?,
+		@RequestHeader(name = UsuarioAutenticadoService.HEADER_USUARIO_ID, required = false) usuarioIdHeader: Long?,
 	): MesResponse {
 		val usuarioId = usuarioAutenticadoService.resolver(usuarioIdHeader)
 		return MesResponse.de(mesService.obterPorIdPublico(id, usuarioId))
@@ -49,7 +49,7 @@ class MesController(
 	@GetMapping
 	fun obterPorReferencia(
 		@RequestParam("referencia") referencia: String,
-		@RequestHeader(name = HEADER_USUARIO_ID, required = false) usuarioIdHeader: Long?,
+		@RequestHeader(name = UsuarioAutenticadoService.HEADER_USUARIO_ID, required = false) usuarioIdHeader: Long?,
 	): MesResponse {
 		val usuarioId = usuarioAutenticadoService.resolver(usuarioIdHeader)
 		return MesResponse.de(mesService.obterPorReferencia(referencia, usuarioId))
@@ -58,7 +58,7 @@ class MesController(
 	@GetMapping("/{id}/sumario")
 	fun obterSumario(
 		@PathVariable id: UUID,
-		@RequestHeader(name = HEADER_USUARIO_ID, required = false) usuarioIdHeader: Long?,
+		@RequestHeader(name = UsuarioAutenticadoService.HEADER_USUARIO_ID, required = false) usuarioIdHeader: Long?,
 	): MesSumarioResponse {
 		val usuarioId = usuarioAutenticadoService.resolver(usuarioIdHeader)
 		return mesService.obterSumario(id, usuarioId)
@@ -68,13 +68,9 @@ class MesController(
 	fun alterarAlternancias(
 		@PathVariable id: UUID,
 		@RequestBody request: AlterarAlternanciasRequest,
-		@RequestHeader(name = HEADER_USUARIO_ID, required = false) usuarioIdHeader: Long?,
+		@RequestHeader(name = UsuarioAutenticadoService.HEADER_USUARIO_ID, required = false) usuarioIdHeader: Long?,
 	): AlternanciasResponse {
 		val usuarioId = usuarioAutenticadoService.resolver(usuarioIdHeader)
 		return mesService.alterarAlternancias(id, usuarioId, request)
-	}
-
-	companion object {
-		const val HEADER_USUARIO_ID = "X-Usuario-Id"
 	}
 }

@@ -1,6 +1,6 @@
 package br.dev.brunorsch.ledger.server
 
-import br.dev.brunorsch.ledger.server.controller.MesController
+import br.dev.brunorsch.ledger.server.service.UsuarioAutenticadoService
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -149,7 +149,7 @@ class MesAlternanciasApiTest : SuportePostgres() {
 		mockMvc.patch("/api/v1/meses/$id/alternancias") {
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"alternarInvestir": false}"""
-			header(MesController.HEADER_USUARIO_ID, "2")
+			header(UsuarioAutenticadoService.HEADER_USUARIO_ID, "2")
 		}
 			.andExpect { status { isNotFound() } }
 	}
