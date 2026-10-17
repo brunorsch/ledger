@@ -30,7 +30,7 @@ Endpoint:
 - `PATCH /api/v1/meses/{id}/alternancias` — aceita `{investir: bool, lazer: bool}` e retorna 200 com as alternâncias atualizadas.
 
 Fora do escopo:
-- Edição de outros campos do mês (captura de parâmetros fica imutável para preservar o passado).
+- Edição de outros campos do mês (snapshot de parâmetros fica imutável para preservar o passado).
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

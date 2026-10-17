@@ -1,15 +1,28 @@
 package br.dev.brunorsch.ledger.server.domain
 
 import org.assertj.core.api.Assertions.assertThat
+import java.math.BigDecimal
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
 class DistribuicaoSobrasTest {
 
+	private val PARAMETROS_PADRAO = ParametrosCalculo(
+		versaoEsquema = 1,
+		percentuais = ParametrosCalculo.Percentuais(
+			essenciais = BigDecimal("0.50"),
+			lazer = BigDecimal("0.30"),
+		),
+		tetos = ParametrosCalculo.Tetos(
+			essenciais = Dinheiro("1300.00"),
+			lazer = Dinheiro("700.00"),
+		),
+	)
+
 	// AC #1: exemplos numéricos do projeto.
 	@Test
 	fun `restante 1193,08 com alternancias padrao`() {
-		val resultado = DistribuicaoSobras.calcular(Dinheiro("1193.08"))
+		val resultado = DistribuicaoSobras.calcular(Dinheiro("1193.08"), PARAMETROS_PADRAO)
 
 		assertThat(resultado.essenciais).isEqualByComparingTo(Dinheiro("596.54"))
 		assertThat(resultado.lazer).isEqualByComparingTo(Dinheiro("357.92"))
@@ -19,7 +32,7 @@ class DistribuicaoSobrasTest {
 
 	@Test
 	fun `restante 7872,34 com alternancias padrao`() {
-		val resultado = DistribuicaoSobras.calcular(Dinheiro("7872.34"))
+		val resultado = DistribuicaoSobras.calcular(Dinheiro("7872.34"), PARAMETROS_PADRAO)
 
 		assertThat(resultado.essenciais).isEqualByComparingTo(Dinheiro("1300.00"))
 		assertThat(resultado.lazer).isEqualByComparingTo(Dinheiro("700.00"))
@@ -40,7 +53,7 @@ class DistribuicaoSobrasTest {
 
 		for (r in restantes) {
 			for ((investir, lazer) in combinacoes) {
-				val resultado = DistribuicaoSobras.calcular(Dinheiro(r), investir = investir, lazer = lazer)
+				val resultado = DistribuicaoSobras.calcular(Dinheiro(r), PARAMETROS_PADRAO, investir = investir, lazer = lazer)
 				val soma = resultado.essenciais.sum(resultado.lazer).sum(resultado.reservas)
 
 				assertThat(soma).isEqualByComparingTo(Dinheiro(r))
@@ -51,7 +64,7 @@ class DistribuicaoSobrasTest {
 	// AC #3: restante == 0 → tudo zero, déficit zero.
 	@Test
 	fun `restante zero distribui zero em todas as categorias e deficit zero`() {
-		val resultado = DistribuicaoSobras.calcular(Dinheiro.ZERO)
+		val resultado = DistribuicaoSobras.calcular(Dinheiro.ZERO, PARAMETROS_PADRAO)
 
 		assertThat(resultado.essenciais).isEqualByComparingTo(Dinheiro.ZERO)
 		assertThat(resultado.lazer).isEqualByComparingTo(Dinheiro.ZERO)
@@ -62,7 +75,7 @@ class DistribuicaoSobrasTest {
 	// AC #4: restante < 0 → tudo zero, déficit = |restante|.
 	@Test
 	fun `restante negativo expoe deficit igual ao valor absoluto e zera categorias`() {
-		val resultado = DistribuicaoSobras.calcular(Dinheiro.allowNegative("-100.00"))
+		val resultado = DistribuicaoSobras.calcular(Dinheiro.allowNegative("-100.00"), PARAMETROS_PADRAO)
 
 		assertThat(resultado.essenciais).isEqualByComparingTo(Dinheiro.ZERO)
 		assertThat(resultado.lazer).isEqualByComparingTo(Dinheiro.ZERO)
@@ -75,7 +88,7 @@ class DistribuicaoSobrasTest {
 		val cenarios = listOf("-1.00", "-50.00", "-100.50", "-1193.08", "-7872.34")
 
 		for (negativo in cenarios) {
-			val resultado = DistribuicaoSobras.calcular(Dinheiro.allowNegative(negativo))
+			val resultado = DistribuicaoSobras.calcular(Dinheiro.allowNegative(negativo), PARAMETROS_PADRAO)
 
 			assertThat(resultado.deficit).isEqualByComparingTo(Dinheiro(negativo.replace("-", "")))
 		}
@@ -86,7 +99,7 @@ class DistribuicaoSobrasTest {
 	fun `investir false e lazer true redistribui flex 70 30 entre essenciais e lazer`() {
 		// restante 1193.08: flex = 596.54, 70% = 417.58 → ess; 30% = 178.96 → laz
 		// ess = 596.54 + 417.58 = 1014.12; laz = 178.96; reservas = 0
-		val resultado = DistribuicaoSobras.calcular(Dinheiro("1193.08"), investir = false, lazer = true)
+		val resultado = DistribuicaoSobras.calcular(Dinheiro("1193.08"), PARAMETROS_PADRAO, investir = false, lazer = true)
 
 		assertThat(resultado.essenciais).isEqualByComparingTo(Dinheiro("1014.12"))
 		assertThat(resultado.lazer).isEqualByComparingTo(Dinheiro("178.96"))
@@ -99,7 +112,7 @@ class DistribuicaoSobrasTest {
 		// restante 7872.34: restanteAposEssenciais = 6572.34; 30% desse valor excede 700,
 		// então lazer é capado em 700 e o excedente (5872.34) vai para essenciais.
 		// ess = 1300 + 5872.34 = 7172.34; reservas = 0.
-		val resultado = DistribuicaoSobras.calcular(Dinheiro("7872.34"), investir = false, lazer = true)
+		val resultado = DistribuicaoSobras.calcular(Dinheiro("7872.34"), PARAMETROS_PADRAO, investir = false, lazer = true)
 
 		assertThat(resultado.essenciais).isEqualByComparingTo(Dinheiro("7172.34"))
 		assertThat(resultado.lazer).isEqualByComparingTo(Dinheiro("700.00"))
@@ -111,7 +124,7 @@ class DistribuicaoSobrasTest {
 	fun `investir true e lazer false redistribui flex 50 50 entre essenciais e reservas`() {
 		// restante 1193.08: flex = 596.54, 50% = 298.27 → ess
 		// ess = min(596.54 + 298.27, 1300) = 894.81; reservas = 298.27
-		val resultado = DistribuicaoSobras.calcular(Dinheiro("1193.08"), investir = true, lazer = false)
+		val resultado = DistribuicaoSobras.calcular(Dinheiro("1193.08"), PARAMETROS_PADRAO, investir = true, lazer = false)
 
 		assertThat(resultado.essenciais).isEqualByComparingTo(Dinheiro("894.81"))
 		assertThat(resultado.lazer).isEqualByComparingTo(Dinheiro.ZERO)
@@ -122,7 +135,7 @@ class DistribuicaoSobrasTest {
 	fun `investir true e lazer false aplica cap de essenciais 1300`() {
 		// restante 7872.34: flex = 6572.34, 50% = 3286.17 → ess capado em 1300
 		// reservas = 7872.34 - 1300 = 6572.34
-		val resultado = DistribuicaoSobras.calcular(Dinheiro("7872.34"), investir = true, lazer = false)
+		val resultado = DistribuicaoSobras.calcular(Dinheiro("7872.34"), PARAMETROS_PADRAO, investir = true, lazer = false)
 
 		assertThat(resultado.essenciais).isEqualByComparingTo(Dinheiro("1300.00"))
 		assertThat(resultado.lazer).isEqualByComparingTo(Dinheiro.ZERO)
@@ -132,8 +145,8 @@ class DistribuicaoSobrasTest {
 	// AC #7: investir=false, lazer=false → tudo em essenciais, sem teto.
 	@Test
 	fun `investir false e lazer false aloca o restante todo em essenciais sem teto`() {
-		val resultado1 = DistribuicaoSobras.calcular(Dinheiro("1193.08"), investir = false, lazer = false)
-		val resultado2 = DistribuicaoSobras.calcular(Dinheiro("7872.34"), investir = false, lazer = false)
+		val resultado1 = DistribuicaoSobras.calcular(Dinheiro("1193.08"), PARAMETROS_PADRAO, investir = false, lazer = false)
+		val resultado2 = DistribuicaoSobras.calcular(Dinheiro("7872.34"), PARAMETROS_PADRAO, investir = false, lazer = false)
 
 		assertThat(resultado1.essenciais).isEqualByComparingTo(Dinheiro("1193.08"))
 		assertThat(resultado1.lazer).isEqualByComparingTo(Dinheiro.ZERO)
@@ -160,7 +173,7 @@ class DistribuicaoSobrasTest {
 
 		for (r in restantes) {
 			for ((investir, lazer) in combinacoes) {
-				val resultado = DistribuicaoSobras.calcular(Dinheiro(r), investir = investir, lazer = lazer)
+				val resultado = DistribuicaoSobras.calcular(Dinheiro(r), PARAMETROS_PADRAO, investir = investir, lazer = lazer)
 
 				assertTrue(resultado.essenciais.compareTo(Dinheiro.ZERO) > 0)
 			}
@@ -170,8 +183,8 @@ class DistribuicaoSobrasTest {
 	// AC #9: determinístico.
 	@Test
 	fun `calcular e deterministico nas mesmas entradas`() {
-		val resultado1 = DistribuicaoSobras.calcular(Dinheiro("1193.08"), investir = false, lazer = true)
-		val resultado2 = DistribuicaoSobras.calcular(Dinheiro("1193.08"), investir = false, lazer = true)
+		val resultado1 = DistribuicaoSobras.calcular(Dinheiro("1193.08"), PARAMETROS_PADRAO, investir = false, lazer = true)
+		val resultado2 = DistribuicaoSobras.calcular(Dinheiro("1193.08"), PARAMETROS_PADRAO, investir = false, lazer = true)
 
 		assertThat(resultado1.essenciais).isEqualByComparingTo(resultado2.essenciais)
 		assertThat(resultado1.lazer).isEqualByComparingTo(resultado2.lazer)
@@ -182,7 +195,7 @@ class DistribuicaoSobrasTest {
 	// Garantia extra: o déficit é Dinheiro não negativo.
 	@Test
 	fun `deficit e Dinheiro nao negativo`() {
-		val resultado = DistribuicaoSobras.calcular(Dinheiro.allowNegative("-50.00"))
+		val resultado = DistribuicaoSobras.calcular(Dinheiro.allowNegative("-50.00"), PARAMETROS_PADRAO)
 
 		assertTrue(resultado.deficit.compareTo(Dinheiro.ZERO) > 0)
 		assertThat(resultado.deficit).isEqualByComparingTo(Dinheiro("50.00"))
@@ -190,8 +203,32 @@ class DistribuicaoSobrasTest {
 
 	@Test
 	fun `categorias zeradas sao iguais a Dinheiro ZERO por compareTo`() {
-		val resultado = DistribuicaoSobras.calcular(Dinheiro("1193.08"), investir = true, lazer = false)
+		val resultado = DistribuicaoSobras.calcular(Dinheiro("1193.08"), PARAMETROS_PADRAO, investir = true, lazer = false)
 
 		assertThat(resultado.lazer).isEqualByComparingTo(Dinheiro.ZERO)
+	}
+
+	// Task 8: a distribuição usa os percentuais e tetos do snapshot informado
+	// (o snapshot gravado no mês), nunca valores fixos.
+	@Test
+	fun `usa percentuais e tetos do snapshot informado`() {
+		val parametros = ParametrosCalculo(
+			versaoEsquema = 1,
+			percentuais = ParametrosCalculo.Percentuais(
+				essenciais = BigDecimal("0.40"),
+				lazer = BigDecimal("0.20"),
+			),
+			tetos = ParametrosCalculo.Tetos(
+				essenciais = Dinheiro("900.00"),
+				lazer = Dinheiro("400.00"),
+			),
+		)
+
+		val resultado = DistribuicaoSobras.calcular(Dinheiro("1193.08"), parametros)
+
+		assertThat(resultado.essenciais).isEqualByComparingTo(Dinheiro("477.23"))
+		assertThat(resultado.lazer).isEqualByComparingTo(Dinheiro("238.62"))
+		assertThat(resultado.reservas).isEqualByComparingTo(Dinheiro("477.23"))
+		assertThat(resultado.deficit).isEqualByComparingTo(Dinheiro.ZERO)
 	}
 }

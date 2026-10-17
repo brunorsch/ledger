@@ -28,7 +28,7 @@ Contexto:
 - O backend já entrega `PATCH /api/v1/meses/{id}/alternancias` (criado em task anterior).
 
 Fora do escopo:
-- Configuração de percentuais e tetos (esses vivem na captura do mês, criada na abertura do mês).
+- Configuração de percentuais e tetos (esses vivem na snapshot do mês, criada na abertura do mês).
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

@@ -39,7 +39,7 @@ Contexto:
   - Restante `R$ 7.872,34` → essenciais `R$ 1.300,00`, lazer `R$ 700,00`, reservas `R$ 5.872,34`.
 
 Fora do escopo:
-- Persistência (captura dos parâmetros fica em task de migrations).
+- Persistência (snapshot dos parâmetros fica em task de migrations).
 - Endpoint HTTP (tratado em task de API).
 - UI (tratado em task vertical de UI).
 <!-- SECTION:DESCRIPTION:END -->

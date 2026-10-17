@@ -2,6 +2,7 @@ package br.dev.brunorsch.ledger.server.controller
 
 import br.dev.brunorsch.ledger.server.dto.CriarMesRequest
 import br.dev.brunorsch.ledger.server.dto.MesResponse
+import br.dev.brunorsch.ledger.server.dto.MesSumarioResponse
 import br.dev.brunorsch.ledger.server.service.MesService
 import br.dev.brunorsch.ledger.server.service.UsuarioAutenticadoService
 import org.springframework.http.HttpStatus
@@ -49,6 +50,15 @@ class MesController(
 	): MesResponse {
 		val usuarioId = usuarioAutenticadoService.resolver(usuarioIdHeader)
 		return MesResponse.de(mesService.obterPorReferencia(referencia, usuarioId))
+	}
+
+	@GetMapping("/{id}/sumario")
+	fun obterSumario(
+		@PathVariable id: UUID,
+		@RequestHeader(name = HEADER_USUARIO_ID, required = false) usuarioIdHeader: Long?,
+	): MesSumarioResponse {
+		val usuarioId = usuarioAutenticadoService.resolver(usuarioIdHeader)
+		return mesService.obterSumario(id, usuarioId)
 	}
 
 	companion object {

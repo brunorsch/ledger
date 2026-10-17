@@ -2,6 +2,7 @@ package br.dev.brunorsch.ledger.server.config
 
 import br.dev.brunorsch.ledger.server.domain.Dinheiro
 import br.dev.brunorsch.ledger.server.domain.ParametrosCalculo
+import br.dev.brunorsch.ledger.server.domain.TipoLancamento
 import org.postgresql.util.PGobject
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.convert.converter.Converter
@@ -16,6 +17,8 @@ import java.math.BigDecimal
  * - `ParametrosCalculo` ↔ `PGobject` (`jsonb`), serializando o JSON com o
  *   mesmo [JsonMapper] da aplicação (Dinheiro como string).
  * - `Dinheiro` ↔ `BigDecimal` para colunas `NUMERIC(14,2)` (ex.: deficit).
+ * - `TipoLancamento` ← `PGobject` para a coluna enum `lancamentos.tipo`
+ *   (a escrita entra com o CRUD de lançamentos).
  */
 @Configuration
 class JdbcConfig(objectMapper: JsonMapper) : AbstractJdbcConfiguration() {
@@ -24,12 +27,14 @@ class JdbcConfig(objectMapper: JsonMapper) : AbstractJdbcConfiguration() {
 	private val parametrosCalculoReadingConverter = ParametrosCalculoReadingConverter(objectMapper)
 	private val dinheiroWritingConverter = DinheiroWritingConverter()
 	private val dinheiroReadingConverter = DinheiroReadingConverter()
+	private val tipoLancamentoReadingConverter = TipoLancamentoReadingConverter()
 
 	override fun userConverters(): List<*> = listOf(
 		parametrosCalculoWritingConverter,
 		parametrosCalculoReadingConverter,
 		dinheiroWritingConverter,
 		dinheiroReadingConverter,
+		tipoLancamentoReadingConverter,
 	)
 
 	@WritingConverter
@@ -62,5 +67,11 @@ class JdbcConfig(objectMapper: JsonMapper) : AbstractJdbcConfiguration() {
 	class DinheiroReadingConverter : Converter<BigDecimal, Dinheiro> {
 
 		override fun convert(source: BigDecimal): Dinheiro = Dinheiro(source)
+	}
+
+	@ReadingConverter
+	class TipoLancamentoReadingConverter : Converter<PGobject, TipoLancamento> {
+
+		override fun convert(source: PGobject): TipoLancamento = TipoLancamento.valueOf(source.value!!)
 	}
 }

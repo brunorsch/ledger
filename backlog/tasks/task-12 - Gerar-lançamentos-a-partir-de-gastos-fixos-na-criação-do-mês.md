@@ -25,12 +25,12 @@ Implementar a regra que, ao criar um mês novo, gera lançamentos de despesa (pa
 Contexto:
 - Cada mês guarda seus próprios lançamentos concretos; os gastos fixos são um modelo que só gera cópias quando um mês novo é criado.
 - Mudanças em gastos fixos não afetam lançamentos de meses já criados.
-- A captura de parâmetros (incluindo o conjunto de gastos fixos usados como origem) é capturada no momento da criação do mês.
+- A snapshot de parâmetros (incluindo o conjunto de gastos fixos usados como origem) é snapshotda no momento da criação do mês.
 - Lançamentos gerados nascem com pago=false e descricao/valor copiados do gasto fixo; o usuário pode editá-los livremente depois.
 
 Fora do escopo:
 - Alternâncias (ficam na criação do mês, alteráveis depois em task dedicada).
-- Captura dos parâmetros em si (já tratado na task de migrations).
+- snapshot dos parâmetros em si (já tratado na task de migrations).
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

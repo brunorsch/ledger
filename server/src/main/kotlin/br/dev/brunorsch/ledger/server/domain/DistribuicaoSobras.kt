@@ -7,7 +7,8 @@ import java.math.BigDecimal
  * essenciais, lazer e reservas, com tratamento de déficit.
  *
  * Use [DistribuicaoSobras.calcular] para obter a distribuição a partir do
- * restante do mês e das alternâncias de investir e lazer.
+ * restante do mês, do snapshot de parâmetros gravado no mês e das alternâncias
+ * de investir e lazer.
  */
 data class DistribuicaoSobras(
 	val essenciais: Dinheiro,
@@ -17,27 +18,26 @@ data class DistribuicaoSobras(
 	val deficit: Dinheiro,
 ) {
 	companion object {
-		private val LIMITE_ESSENCIAIS: Dinheiro = Dinheiro("1300.00")
-		private val LIMITE_LAZER: Dinheiro = Dinheiro("700.00")
-		private val PERCENTUAL_LAZER: BigDecimal = BigDecimal("0.30")
 		private val DOIS: BigDecimal = BigDecimal(2)
 
 		/**
 		 * Calcula a distribuição das sobras do mês.
 		 *
-		 * Regra base (alternâncias padrão, ambas ligadas):
-		 * - `essenciais = min(50% do restante, 1300)`
-		 * - `lazer = min(30% do restante, 700)`
+		 * Os percentuais e tetos vêm do [parametros], o snapshot gravado no
+		 * mês na criação — nunca parâmetros globais atuais. Regra base
+		 * (alternâncias padrão, ambas ligadas):
+		 * - `essenciais = min(percentual de essenciais × restante, teto de essenciais)`
+		 * - `lazer = min(percentual de lazer × restante, teto de lazer)`
 		 * - `reservas = restante - essenciais - lazer`
 		 *
 		 * Alternâncias:
 		 * - `investir=false, lazer=true`: o restante após os essenciais base é
-		 *   redistribuído — o lazer absorve sua fatia (limitada a 700) e o que
-		 *   sobra vai para essenciais.
+		 *   redistribuído — o lazer absorve sua fatia (percentual de lazer,
+		 *   limitada ao teto de lazer) e o que sobra vai para essenciais.
 		 * - `investir=true, lazer=false`: o restante após os essenciais base é
-		 *   dividido em duas metades — uma vai para essenciais (limitada a 1300)
-		 *   e a outra para reservas. O excedente de essenciais permanece em
-		 *   reservas.
+		 *   dividido em duas metades — uma vai para essenciais (limitada ao
+		 *   teto de essenciais) e a outra para reservas. O excedente de
+		 *   essenciais permanece em reservas.
 		 * - `investir=false, lazer=false`: o restante vai inteiro para
 		 *   essenciais, sem teto.
 		 *
@@ -51,6 +51,7 @@ data class DistribuicaoSobras(
 		 */
 		fun calcular(
 			restante: Dinheiro,
+			parametros: ParametrosCalculo,
 			investir: Boolean = true,
 			lazer: Boolean = true,
 		): DistribuicaoSobras {
@@ -63,9 +64,14 @@ data class DistribuicaoSobras(
 				)
 			}
 
-			val essenciaisBase = restante.divide(DOIS, 2).min(LIMITE_ESSENCIAIS)
+			val percentualEssenciais = parametros.percentuais.essenciais
+			val percentualLazer = parametros.percentuais.lazer
+			val tetoEssenciais = parametros.tetos.essenciais
+			val tetoLazer = parametros.tetos.lazer
+
+			val essenciaisBase = restante.multiply(percentualEssenciais).min(tetoEssenciais)
 			val restanteAposEssenciais = restante.subtract(essenciaisBase)
-			val lazerBase = restante.multiply(PERCENTUAL_LAZER).min(LIMITE_LAZER)
+			val lazerBase = restante.multiply(percentualLazer).min(tetoLazer)
 
 			return when {
 				investir && lazer -> {
@@ -78,7 +84,7 @@ data class DistribuicaoSobras(
 					)
 				}
 				!investir && lazer -> {
-					val adicionaisLazer = restanteAposEssenciais.multiply(PERCENTUAL_LAZER).min(LIMITE_LAZER)
+					val adicionaisLazer = restanteAposEssenciais.multiply(percentualLazer).min(tetoLazer)
 					val adicionaisEssenciais = restanteAposEssenciais.subtract(adicionaisLazer)
 					val essenciais = essenciaisBase.sum(adicionaisEssenciais)
 					val reservas = restante.subtract(essenciais).subtract(adicionaisLazer)
@@ -91,7 +97,7 @@ data class DistribuicaoSobras(
 				}
 				investir && !lazer -> {
 					val adicionaisEssenciais = restanteAposEssenciais.divide(DOIS, 2)
-					val essenciais = essenciaisBase.sum(adicionaisEssenciais).min(LIMITE_ESSENCIAIS)
+					val essenciais = essenciaisBase.sum(adicionaisEssenciais).min(tetoEssenciais)
 					val reservas = restante.subtract(essenciais)
 					DistribuicaoSobras(
 						essenciais = essenciais,
