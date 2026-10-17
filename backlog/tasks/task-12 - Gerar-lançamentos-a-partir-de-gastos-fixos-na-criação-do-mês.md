@@ -1,7 +1,7 @@
 ---
 id: TASK-12
 title: Gerar lançamentos a partir de gastos fixos na criação do mês
-status: In Progress
+status: Done
 assignee:
   - '@brunorsch'
 created_date: '2026-10-11 17:39'
@@ -62,3 +62,9 @@ Ajustes da revisão aplicados: comentários triviais removidos; indicador de ori
 
 2ª rodada de revisão: renomeado indicador de_gasto_fixo -> origem_gasto_fixo (coluna, campo origemGastoFixo em domínio/DTO/API, método existeOrigemGastoFixo, arquivo da migration V8 renomeado). ./gradlew :server:test -> 123 testes, 0 falhas. Atenção: se o banco local (docker) já aplicou a V8 antiga, rodar docker compose down -v antes de subir.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Ao criar um mês, o backend gera um lançamento DESPESA (pago=false, origemGastoFixo=true) por gasto fixo ativo do usuário; a guarda de idempotência usa existeOrigemGastoFixo e mês com referência duplicada retorna 409. Novo campo origemGastoFixo (migration V8, domínio, repositório, DTO/API) distingue lançamentos gerados de manuais. Verificado com ./gradlew :server:test: 123 testes, 0 falhas (9 testes de integração em MesCriacaoGastosFixosApiTest cobrindo os ACs #1-#7 e o 409, mais GastoFixoTest e atualizações em LancamentoApiTest/MigracoesPostgresTest).
+<!-- SECTION:FINAL_SUMMARY:END -->
