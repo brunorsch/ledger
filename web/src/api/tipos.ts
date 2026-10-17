@@ -54,11 +54,25 @@ export type LancamentoReceitaResponse = {
 
 export type LancamentoResponse = LancamentoDespesaResponse | LancamentoReceitaResponse
 
+export type CriarLancamentoCorpo = {
+  tipo: 'DESPESA' | 'RECEITA'
+  descricao: string
+  valor: string
+}
+
+export type AlterarLancamentoCorpo = {
+  descricao?: string
+  valor?: string
+  pago?: boolean
+}
+
 export class ErroApi extends Error {
   readonly status: number
+  readonly mensagem: string
 
   constructor(message: string, status: number) {
     super(message)
+    this.mensagem = message
     this.status = status
     this.name = 'ErroApi'
   }

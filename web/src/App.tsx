@@ -1,9 +1,17 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ErroApi } from './api/tipos.ts'
+import { useMemo, useState } from 'react'
 import type { LancamentoResponse, MesResponse, MesSumarioResponse } from './api/tipos.ts'
-import { listarLancamentos, obterMesPorReferencia, obterSumario } from './api/cliente.ts'
+import {
+  useAlternarPagoLancamento,
+  useLancamentos,
+  useMes,
+  useSumario,
+} from './api/consultas.ts'
 import { Box } from './Box.tsx'
+import { Botao } from './componentes/Botao.tsx'
+import { Modal } from './componentes/Modal.tsx'
 import { formatarBRL } from './formato/brl.ts'
+import { ConfirmacaoRemocao } from './lancamentos/ConfirmacaoRemocao.tsx'
+import { FormularioLancamento } from './lancamentos/FormularioLancamento.tsx'
 
 const MES_ATUAL = (() => {
   const hoje = new Date()
@@ -32,45 +40,67 @@ function formatarMesCurto(referencia: string): string {
   return data.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')
 }
 
-type EstadoCarregamento =
-  | { tipo: 'carregando' }
-  | { tipo: 'erro'; mensagem: string }
-  | {
-      tipo: 'pronto'
-      mes: MesResponse
-      sumario: MesSumarioResponse
-      lancamentos: LancamentoResponse[]
-    }
+type ModalAtivo =
+  | { tipo: 'criar'; tipoLancamento: 'DESPESA' | 'RECEITA' }
+  | { tipo: 'editar'; lancamento: LancamentoResponse }
+  | { tipo: 'remover'; lancamento: LancamentoResponse }
+  | null
 
 function App() {
   const referencia = useMemo(() => resolverReferencia(), [])
-  const [estado, setEstado] = useState<EstadoCarregamento>(() => ({ tipo: 'carregando' }))
 
-  const carregar = useCallback(async () => {
-    setEstado({ tipo: 'carregando' })
+  const { data: mes, isLoading: carregandoMes, error: erroMes, refetch: recarregarMes } = useMes(referencia)
+  const mesId = mes?.id ?? ''
 
-    try {
-      const mes = await obterMesPorReferencia(referencia)
-      const [sumario, lancamentos] = await Promise.all([
-        obterSumario(mes.id),
-        listarLancamentos(mes.id),
-      ])
+  const {
+    data: sumario,
+    isLoading: carregandoSumario,
+    error: erroSumario,
+    refetch: recarregarSumario,
+  } = useSumario(mesId)
 
-      setEstado({ tipo: 'pronto', mes, sumario, lancamentos })
-    } catch (erro) {
-      const mensagem =
-        erro instanceof ErroApi && erro.status === 404
-          ? 'Não foi possível carregar os dados do mês.'
-          : 'Não foi possível carregar os dados do mês. Verifique sua conexão e tente novamente.'
-      setEstado({ tipo: 'erro', mensagem })
-    }
-  }, [referencia])
+  const {
+    data: lancamentos,
+    isLoading: carregandoLancamentos,
+    error: erroLancamentos,
+    refetch: recarregarLancamentos,
+  } = useLancamentos(mesId)
 
-  useEffect(() => {
-    // Carrega os dados do mês na montagem do componente.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void carregar()
-  }, [carregar])
+  const [modalAtivo, setModalAtivo] = useState<ModalAtivo>(null)
+
+  const carregando = carregandoMes || carregandoSumario || carregandoLancamentos
+  const erro = erroMes || erroSumario || erroLancamentos
+
+  if (carregando) {
+    return (
+      <div className="min-h-screen bg-fill px-4 py-6 text-ink md:px-8 md:py-10">
+        <div className="mx-auto max-w-6xl">
+          <TelaCarregando />
+        </div>
+      </div>
+    )
+  }
+
+  if (erro || !mes || !sumario || !lancamentos) {
+    return (
+      <div className="min-h-screen bg-fill px-4 py-6 text-ink md:px-8 md:py-10">
+        <div className="mx-auto max-w-6xl">
+          <TelaErro
+            mensagem="Não foi possível carregar os dados do mês. Verifique sua conexão e tente novamente."
+            onTentarNovamente={() => {
+              void recarregarMes()
+              void recarregarSumario()
+              void recarregarLancamentos()
+            }}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  function fecharModal() {
+    setModalAtivo(null)
+  }
 
   return (
     <div className="min-h-screen bg-fill px-4 py-6 text-ink md:px-8 md:py-10">
@@ -82,9 +112,60 @@ function App() {
           </h1>
         </header>
 
-        {estado.tipo === 'carregando' && <TelaCarregando />}
-        {estado.tipo === 'erro' && <TelaErro mensagem={estado.mensagem} onTentarNovamente={carregar} />}
-        {estado.tipo === 'pronto' && <TelaPronto {...estado} />}
+        <TelaPronto
+          mes={mes}
+          sumario={sumario}
+          lancamentos={lancamentos}
+          onCriar={(tipo) => setModalAtivo({ tipo: 'criar', tipoLancamento: tipo })}
+          onEditar={(lancamento) => setModalAtivo({ tipo: 'editar', lancamento })}
+          onRemover={(lancamento) => setModalAtivo({ tipo: 'remover', lancamento })}
+        />
+
+        <Modal
+          aberto={modalAtivo?.tipo === 'criar'}
+          titulo={modalAtivo?.tipo === 'criar' ? (modalAtivo.tipoLancamento === 'DESPESA' ? 'Nova despesa' : 'Nova receita') : ''}
+          onFechar={fecharModal}
+        >
+          {modalAtivo?.tipo === 'criar' && (
+            <FormularioLancamento
+              mesId={mes.id}
+              tipo={modalAtivo.tipoLancamento}
+              onSucesso={fecharModal}
+              onCancelar={fecharModal}
+            />
+          )}
+        </Modal>
+
+        <Modal
+          aberto={modalAtivo?.tipo === 'editar'}
+          titulo="Editar lançamento"
+          onFechar={fecharModal}
+        >
+          {modalAtivo?.tipo === 'editar' && (
+            <FormularioLancamento
+              mesId={mes.id}
+              tipo={modalAtivo.lancamento.tipo}
+              lancamento={modalAtivo.lancamento}
+              onSucesso={fecharModal}
+              onCancelar={fecharModal}
+            />
+          )}
+        </Modal>
+
+        <Modal
+          aberto={modalAtivo?.tipo === 'remover'}
+          titulo="Remover lançamento"
+          onFechar={fecharModal}
+        >
+          {modalAtivo?.tipo === 'remover' && (
+            <ConfirmacaoRemocao
+              mesId={mes.id}
+              lancamento={modalAtivo.lancamento}
+              onSucesso={fecharModal}
+              onCancelar={fecharModal}
+            />
+          )}
+        </Modal>
       </div>
     </div>
   )
@@ -109,13 +190,9 @@ function TelaErro({ mensagem, onTentarNovamente }: { mensagem: string; onTentarN
       </div>
       <h2 className="mt-4 font-display text-lg font-medium">Algo deu errado</h2>
       <p className="mt-2 max-w-sm text-muted">{mensagem}</p>
-      <button
-        type="button"
-        onClick={onTentarNovamente}
-        className="mt-6 rounded-lg bg-ink px-5 py-2.5 text-sm font-medium text-paper transition hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-      >
+      <Botao variante="primaria" onClick={onTentarNovamente} className="mt-6">
         Tentar novamente
-      </button>
+      </Botao>
     </div>
   )
 }
@@ -124,10 +201,16 @@ function TelaPronto({
   mes,
   sumario,
   lancamentos,
+  onCriar,
+  onEditar,
+  onRemover,
 }: {
   mes: MesResponse
   sumario: MesSumarioResponse
   lancamentos: LancamentoResponse[]
+  onCriar: (tipo: 'DESPESA' | 'RECEITA') => void
+  onEditar: (lancamento: LancamentoResponse) => void
+  onRemover: (lancamento: LancamentoResponse) => void
 }) {
   const despesas = lancamentos.filter((l) => l.tipo === 'DESPESA')
   const receitas = lancamentos.filter((l) => l.tipo === 'RECEITA')
@@ -140,17 +223,25 @@ function TelaPronto({
           lancamentos={despesas}
           destaque
           mensagemVazia="Nenhuma despesa neste mês."
+          acaoCriar={{ rotulo: 'Adicionar despesa', onClick: () => onCriar('DESPESA') }}
+          mesId={mes.id}
+          onEditar={onEditar}
+          onRemover={onRemover}
         />
         <CardLancamentos
           titulo="Receitas"
           lancamentos={receitas}
           mensagemVazia="Nenhuma receita neste mês."
+          acaoCriar={{ rotulo: 'Adicionar receita', onClick: () => onCriar('RECEITA') }}
+          mesId={mes.id}
+          onEditar={onEditar}
+          onRemover={onRemover}
         />
       </section>
 
       <aside className="space-y-6">
         <BlocoSumario sumario={sumario} />
-        <BlocoDistribuicao sumario={sumario} mes={mes} />
+        <BlocoDistribuicao sumario={sumario} mesReferencia={mes.mesReferencia} />
       </aside>
     </div>
   )
@@ -161,23 +252,48 @@ function CardLancamentos({
   lancamentos,
   destaque = false,
   mensagemVazia,
+  acaoCriar,
+  mesId,
+  onEditar,
+  onRemover,
 }: {
   titulo: string
   lancamentos: LancamentoResponse[]
   destaque?: boolean
   mensagemVazia: string
+  acaoCriar: { rotulo: string; onClick: () => void }
+  mesId: string
+  onEditar: (lancamento: LancamentoResponse) => void
+  onRemover: (lancamento: LancamentoResponse) => void
 }) {
   return (
-    <Box titulo={titulo} contagem={lancamentos.length} destaque={destaque}>
+    <Box
+      titulo={titulo}
+      contagem={lancamentos.length}
+      destaque={destaque}
+      acao={
+        <Botao variante="primaria" tamanho="pequeno" onClick={acaoCriar.onClick}>
+          {acaoCriar.rotulo}
+        </Botao>
+      }
+    >
       {lancamentos.length === 0 ? (
-        <div className="px-5 py-16 text-center md:px-6">
+        <div className="flex flex-col items-center justify-center px-5 py-12 text-center md:px-6">
           <p className="text-muted">{mensagemVazia}</p>
+          <Botao variante="secundaria" tamanho="pequeno" onClick={acaoCriar.onClick} className="mt-4">
+            {acaoCriar.rotulo}
+          </Botao>
         </div>
       ) : (
         <ul className="divide-y divide-line">
           {lancamentos.map((lancamento) => (
             <li key={lancamento.id}>
-              <LancamentoItem lancamento={lancamento} />
+              <LancamentoItem
+                mesId={mesId}
+                lancamento={lancamento}
+                onEditar={() => onEditar(lancamento)}
+                onRemover={() => onRemover(lancamento)}
+              />
             </li>
           ))}
         </ul>
@@ -186,47 +302,101 @@ function CardLancamentos({
   )
 }
 
-function LancamentoItem({ lancamento }: { lancamento: LancamentoResponse }) {
+function LancamentoItem({
+  mesId,
+  lancamento,
+  onEditar,
+  onRemover,
+}: {
+  mesId: string
+  lancamento: LancamentoResponse
+  onEditar: () => void
+  onRemover: () => void
+}) {
   const isDespesa = lancamento.tipo === 'DESPESA'
   const isReceita = lancamento.tipo === 'RECEITA'
+  const alternarPago = useAlternarPagoLancamento(mesId)
+
+  async function aoAlternarPago() {
+    if (!isDespesa) return
+    try {
+      await alternarPago.mutateAsync({ id: lancamento.id, pago: !lancamento.pago })
+    } catch {
+      // Em caso de erro nada é invalidado: a listagem mantém o status anterior.
+    }
+  }
 
   return (
-    <div className="flex items-center justify-between gap-4 px-5 py-4 md:px-6">
+    <div className="flex items-center justify-between gap-3 px-5 py-4 md:px-6">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <span
-            className={`inline-flex h-2 w-2 rounded-full ${
-              isReceita ? 'bg-success' : 'bg-danger'
-            }`}
+            className={`inline-flex h-2 w-2 rounded-full ${isReceita ? 'bg-success' : 'bg-danger'}`}
             aria-hidden="true"
           />
           <p className="truncate font-medium">{lancamento.descricao}</p>
         </div>
         <p className="mt-1 text-xs text-subtle">
           {isDespesa ? (
-            lancamento.pago ? (
-              <span className="inline-flex items-center gap-1 text-success">
-                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                Pago
-              </span>
-            ) : (
-              <span className="text-warning">Não pago</span>
-            )
+            <button
+              type="button"
+              onClick={aoAlternarPago}
+              disabled={alternarPago.isPending}
+              aria-pressed={lancamento.pago}
+              className={`inline-flex items-center gap-1 transition hover:underline disabled:cursor-not-allowed disabled:opacity-60 ${
+                lancamento.pago ? 'text-success' : 'text-warning'
+              }`}
+            >
+              {lancamento.pago ? (
+                <>
+                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Pago
+                </>
+              ) : (
+                <>Não pago</>
+              )}
+            </button>
           ) : (
             <span>Receita</span>
           )}
         </p>
       </div>
-      <p
-        className={`shrink-0 font-medium tabular-nums ${
-          isReceita ? 'text-success' : 'text-ink'
-        }`}
-      >
-        {isDespesa ? '-' : '+'}
-        {formatarBRL(lancamento.valor)}
-      </p>
+
+      <div className="flex shrink-0 items-center gap-3">
+        <p
+          className={`font-medium tabular-nums ${isReceita ? 'text-success' : 'text-ink'}`}
+        >
+          {isDespesa ? '-' : '+'}
+          {formatarBRL(lancamento.valor)}
+        </p>
+
+        <div className="flex items-center gap-1">
+          <Botao
+            variante="fantasma"
+            tamanho="pequeno"
+            onClick={onEditar}
+            aria-label={`Editar ${lancamento.descricao}`}
+            className="h-8 w-8 p-0"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+          </Botao>
+          <Botao
+            variante="fantasma"
+            tamanho="pequeno"
+            onClick={onRemover}
+            aria-label={`Remover ${lancamento.descricao}`}
+            className="h-8 w-8 p-0 text-danger hover:bg-danger-soft hover:text-danger"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </Botao>
+        </div>
+      </div>
     </div>
   )
 }
@@ -270,7 +440,7 @@ function BlocoSumario({ sumario }: { sumario: MesSumarioResponse }) {
   )
 }
 
-function BlocoDistribuicao({ sumario, mes }: { sumario: MesSumarioResponse; mes: MesResponse }) {
+function BlocoDistribuicao({ sumario, mesReferencia }: { sumario: MesSumarioResponse; mesReferencia: string }) {
   const restanteNegativo = Number(sumario.restante) <= 0
   const distribuicao = sumario.distribuicao
 
@@ -289,7 +459,7 @@ function BlocoDistribuicao({ sumario, mes }: { sumario: MesSumarioResponse; mes:
 
   const nota = restanteNegativo
     ? undefined
-    : `Baseado nos parâmetros de ${formatarMesCurto(mes.mesReferencia)}.`
+    : `Baseado nos parâmetros de ${formatarMesCurto(mesReferencia)}.`
 
   return (
     <Box titulo="Distribuição das sobras" nota={nota}>
@@ -297,11 +467,7 @@ function BlocoDistribuicao({ sumario, mes }: { sumario: MesSumarioResponse; mes:
         {itens.map(({ rotulo, valor, destaque }) => (
           <div key={rotulo} className="flex items-center justify-between px-5 py-3.5 md:px-6">
             <dt className="text-sm text-muted">{rotulo}</dt>
-            <dd
-              className={`font-medium tabular-nums ${
-                destaque ? 'text-danger' : 'text-ink'
-              }`}
-            >
+            <dd className={`font-medium tabular-nums ${destaque ? 'text-danger' : 'text-ink'}`}>
               {formatarBRL(valor)}
             </dd>
           </div>
