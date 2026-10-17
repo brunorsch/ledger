@@ -1,5 +1,7 @@
 package br.dev.brunorsch.ledger.server.controller
 
+import br.dev.brunorsch.ledger.server.dto.AlterarAlternanciasRequest
+import br.dev.brunorsch.ledger.server.dto.AlternanciasResponse
 import br.dev.brunorsch.ledger.server.dto.CriarMesRequest
 import br.dev.brunorsch.ledger.server.dto.MesResponse
 import br.dev.brunorsch.ledger.server.dto.MesSumarioResponse
@@ -8,6 +10,7 @@ import br.dev.brunorsch.ledger.server.service.UsuarioAutenticadoService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -59,6 +62,16 @@ class MesController(
 	): MesSumarioResponse {
 		val usuarioId = usuarioAutenticadoService.resolver(usuarioIdHeader)
 		return mesService.obterSumario(id, usuarioId)
+	}
+
+	@PatchMapping("/{id}/alternancias")
+	fun alterarAlternancias(
+		@PathVariable id: UUID,
+		@RequestBody request: AlterarAlternanciasRequest,
+		@RequestHeader(name = HEADER_USUARIO_ID, required = false) usuarioIdHeader: Long?,
+	): AlternanciasResponse {
+		val usuarioId = usuarioAutenticadoService.resolver(usuarioIdHeader)
+		return mesService.alterarAlternancias(id, usuarioId, request)
 	}
 
 	companion object {

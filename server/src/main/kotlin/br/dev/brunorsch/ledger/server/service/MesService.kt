@@ -4,6 +4,8 @@ import br.dev.brunorsch.ledger.server.domain.Dinheiro
 import br.dev.brunorsch.ledger.server.domain.DistribuicaoSobras
 import br.dev.brunorsch.ledger.server.domain.Mes
 import br.dev.brunorsch.ledger.server.domain.Sumario
+import br.dev.brunorsch.ledger.server.dto.AlterarAlternanciasRequest
+import br.dev.brunorsch.ledger.server.dto.AlternanciasResponse
 import br.dev.brunorsch.ledger.server.dto.CriarMesRequest
 import br.dev.brunorsch.ledger.server.dto.MesSumarioResponse
 import br.dev.brunorsch.ledger.server.exception.MesNaoEncontradoException
@@ -73,5 +75,26 @@ class MesService(
 			lazer = mes.alternarLazer,
 		)
 		return MesSumarioResponse.fromDomain(sumario, distribuicao)
+	}
+
+	/**
+	 * Altera as alternâncias de investir e lazer gravadas no mês.
+	 *
+	 * Campos não enviados no request mantêm o valor atual (atualização
+	 * parcial); o snapshot de parâmetros e os demais campos ficam intactos.
+	 */
+	fun alterarAlternancias(
+		idPublico: UUID,
+		usuarioId: Long,
+		request: AlterarAlternanciasRequest,
+	): AlternanciasResponse {
+		val mes = mesRepository.findByIdPublicoAndUsuarioId(idPublico, usuarioId)
+			?: throw MesNaoEncontradoException()
+
+		val atualizado = mes.copy(
+			alternarInvestir = request.alternarInvestir ?: mes.alternarInvestir,
+			alternarLazer = request.alternarLazer ?: mes.alternarLazer,
+		)
+		return AlternanciasResponse.fromDomain(mesRepository.save(atualizado))
 	}
 }
