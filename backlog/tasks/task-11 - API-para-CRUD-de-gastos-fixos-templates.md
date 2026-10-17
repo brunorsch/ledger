@@ -1,11 +1,11 @@
 ---
 id: TASK-11
 title: API para CRUD de gastos fixos (templates)
-status: In Progress
+status: Done
 assignee:
   - '@brunorsch'
 created_date: '2026-10-11 17:39'
-updated_date: '2026-10-17 02:53'
+updated_date: '2026-10-17 03:11'
 labels:
   - api
   - backend
