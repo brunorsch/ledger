@@ -1,11 +1,11 @@
 ---
 id: TASK-13
 title: 'UI: visualizar mês com lançamentos, sumário e distribuição'
-status: In Progress
+status: Done
 assignee:
   - '@brunorsch'
 created_date: '2026-10-11 17:39'
-updated_date: '2026-10-17 21:17'
+updated_date: '2026-10-17 21:21'
 labels:
   - ui
   - frontend
@@ -62,10 +62,12 @@ Implementada a tela principal com Tailwind CSS. Criados web/src/api/tipos.ts, we
 Implementação da tela concluída (designer): App.tsx com 3 blocos (lançamentos, sumário, distribuição), loading e erro+retry; Tailwind CSS 4 (uso aprovado pelo usuário); api/ com fetch tipado e proxy /api no vite.config.ts; formato/brl.ts com Intl pt-BR. Correções da revisão do orquestrador: tipo ParametrosCalculoResponse alinhado ao JSON real (versaoEsquema/percentuais/tetos) e remoção do App.css vazio. Verificado: pnpm lint e pnpm build OK; contrato dos 3 endpoints conferido contra backend real (mesReferencia vem como 'YYYY-MM-DD'; percentuais numéricos, tetos como string); proxy do Vite validado ponta a ponta. Aguardando revisão do usuário antes do commit.
 
 Decisão do usuário: backend na porta 9100 (application.yaml) e front dev na 9000 (vite.config.ts, proxy -> 9100). Verificação ponta a ponta refeita após a mudança: backend responde na 9100, proxy do Vite na 9000 entrega os 3 endpoints com contrato correto (dados de teste criados via API).
+
+Validação final (orquestrador, via DOM script no browser + backend real): cenário feliz 2026-10 (3 blocos, lançamentos com BRL e pago/não pago, sumário e distribuição corretos); déficit 2026-11 (4 linhas: essenciais/lazer/reservas zerados + Déficit R$ 500,00); loading capturado em voo; erro 404 com 'Tentar novamente' e retry re-executando as requests (mês passou a carregar após ser criado). Console do browser sem erros. Responsividade verificada manualmente pelo designer em 360px e 1024px. pnpm lint e pnpm build OK.
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary
 
 <!-- SECTION:FINAL_SUMMARY:BEGIN -->
-Implementada a tela principal do mês no Ledger. Substituição do template Vite por interface com três blocos: lançamentos, sumário e distribuição das sobras. Adicionado proxy /api -> localhost:8080 no Vite, tipos e cliente de API em web/src/api/, formatador BRL centralizado em web/src/formato/brl.ts, e layout responsivo com Tailwind CSS. Verificado com pnpm lint e pnpm build sem erros; testado manualmente contra backend real (porta 8081, pois 8080 ocupada no ambiente) para mês existente, mês inexistente (404) e cenário de déficit; console do browser sem erros. Não foi possível capturar screenshots devido à janela do browser não estar visível para a ferramenta de screenshot.
+Tela principal do mês implementada (TASK-13): App.tsx com três blocos (lançamentos, sumário, distribuição das sobras), loading e erro com retry; Tailwind CSS 4; api/ com fetch tipado; formato/brl.ts com Intl pt-BR; mês resolvido via ?referencia=YYYY-MM (padrão mês atual). Backend movido para a porta 9100 (application.yaml) e dev server do front para 9000 com proxy /api (decisão do usuário). Verificado com pnpm lint e pnpm build, contrato dos 3 endpoints contra backend real e exercício de UI via DOM script no browser (cenários feliz, déficit, loading e erro+retry); responsividade conferida em 360px e 1024px.
 <!-- SECTION:FINAL_SUMMARY:END -->
