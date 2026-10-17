@@ -20,6 +20,10 @@ class ApiExceptionHandler {
 	fun tratarGastoFixoNaoEncontrado(ex: GastoFixoNaoEncontradoException): ResponseEntity<ErroResponse> =
 		ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErroResponse(ex.message!!))
 
+	@ExceptionHandler(MesJaExisteException::class)
+	fun tratarMesJaExiste(ex: MesJaExisteException): ResponseEntity<ErroResponse> =
+		ResponseEntity.status(HttpStatus.CONFLICT).body(ErroResponse(ex.message!!))
+
 	@ExceptionHandler(ValidacaoException::class)
 	fun tratarValidacao(ex: ValidacaoException): ResponseEntity<ErroResponse> =
 		ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ErroResponse(ex.message!!))

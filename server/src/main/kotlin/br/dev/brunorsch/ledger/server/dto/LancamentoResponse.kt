@@ -24,6 +24,7 @@ sealed interface LancamentoResponse {
 		override val valor: Dinheiro,
 		val pago: Boolean,
 		val pagoEm: Instant?,
+		val origemGastoFixo: Boolean,
 	) : LancamentoResponse {
 		override val tipo: TipoLancamento get() = TipoLancamento.DESPESA
 	}
@@ -44,6 +45,7 @@ sealed interface LancamentoResponse {
 				valor = lancamento.valor,
 				pago = lancamento.pago,
 				pagoEm = lancamento.pagoEm,
+				origemGastoFixo = lancamento.origemGastoFixo,
 			)
 			is Lancamento.Receita -> Receita(
 				id = lancamento.idPublico,

@@ -74,6 +74,7 @@ class LancamentoApiTest : SuportePostgres() {
 			.andExpect { jsonPath("$.valor") { value("250.50") } }
 			.andExpect { jsonPath("$.pago") { value(false) } }
 			.andExpect { jsonPath("$.pagoEm") { value(null) } }
+			.andExpect { jsonPath("$.origemGastoFixo") { value(false) } }
 	}
 
 	// AC #2: POST cria receita com pago ignorado e retorna 201 sem pago/pagoEm.

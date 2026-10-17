@@ -14,8 +14,8 @@ class LancamentoRepository(private val jdbcTemplate: JdbcTemplate) {
 		val (tipo, pago, pagoEm) = colunasTipoPago(lancamento)
 		val id = jdbcTemplate.queryForObject(
 			"""
-			INSERT INTO lancamentos (id_publico, usuario_id, mes_id, tipo, descricao, valor, pago, pago_em)
-			VALUES (?, ?, ?, ?::tipo_lancamento, ?, ?, ?, ?)
+			INSERT INTO lancamentos (id_publico, usuario_id, mes_id, tipo, descricao, valor, pago, pago_em, origem_gasto_fixo)
+			VALUES (?, ?, ?, ?::tipo_lancamento, ?, ?, ?, ?, ?)
 			RETURNING id
 			""".trimIndent(),
 			Long::class.java,
@@ -27,6 +27,7 @@ class LancamentoRepository(private val jdbcTemplate: JdbcTemplate) {
 			lancamento.valor.valor,
 			pago,
 			pagoEm,
+			origemGastoFixo(lancamento),
 		)!!
 		return lancamento.comId(id)
 	}
@@ -34,7 +35,7 @@ class LancamentoRepository(private val jdbcTemplate: JdbcTemplate) {
 	fun listarPorMes(mesId: Long, usuarioId: Long): List<Lancamento> =
 		jdbcTemplate.query(
 			"""
-			SELECT id, id_publico, tipo, descricao, valor, pago, pago_em
+			SELECT id, id_publico, tipo, descricao, valor, pago, pago_em, origem_gasto_fixo
 			FROM lancamentos
 			WHERE mes_id = ? AND usuario_id = ?
 			ORDER BY id
@@ -47,7 +48,7 @@ class LancamentoRepository(private val jdbcTemplate: JdbcTemplate) {
 	fun buscarPorIdPublicoEUsuario(idPublico: UUID, usuarioId: Long): Lancamento? =
 		jdbcTemplate.query(
 			"""
-			SELECT id, id_publico, tipo, descricao, valor, pago, pago_em
+			SELECT id, id_publico, tipo, descricao, valor, pago, pago_em, origem_gasto_fixo
 			FROM lancamentos
 			WHERE id_publico = ? AND usuario_id = ?
 			""".trimIndent(),
@@ -73,6 +74,14 @@ class LancamentoRepository(private val jdbcTemplate: JdbcTemplate) {
 		)
 	}
 
+	fun existeOrigemGastoFixo(mesId: Long, usuarioId: Long): Boolean =
+		jdbcTemplate.queryForObject(
+			"SELECT EXISTS(SELECT 1 FROM lancamentos WHERE mes_id = ? AND usuario_id = ? AND origem_gasto_fixo)",
+			Boolean::class.java,
+			mesId,
+			usuarioId,
+		)!!
+
 	fun removerPorIdPublicoEUsuario(idPublico: UUID, usuarioId: Long): Boolean =
 		jdbcTemplate.update(
 			"DELETE FROM lancamentos WHERE id_publico = ? AND usuario_id = ?",
@@ -85,6 +94,9 @@ class LancamentoRepository(private val jdbcTemplate: JdbcTemplate) {
 			is Lancamento.Despesa -> Triple("DESPESA", lancamento.pago, lancamento.pagoEm?.let(java.sql.Timestamp::from))
 			is Lancamento.Receita -> Triple("RECEITA", false, null)
 		}
+
+	private fun origemGastoFixo(lancamento: Lancamento): Boolean =
+		(lancamento as? Lancamento.Despesa)?.origemGastoFixo ?: false
 
 	private fun Lancamento.comId(id: Long): Lancamento =
 		when (this) {
@@ -106,6 +118,7 @@ class LancamentoRepository(private val jdbcTemplate: JdbcTemplate) {
 				pago = rs.getBoolean("pago"),
 				descricao = rs.getString("descricao"),
 				pagoEm = rs.getTimestamp("pago_em")?.toInstant(),
+				origemGastoFixo = rs.getBoolean("origem_gasto_fixo"),
 				id = rs.getLong("id"),
 				idPublico = rs.getObject("id_publico", UUID::class.java),
 			)

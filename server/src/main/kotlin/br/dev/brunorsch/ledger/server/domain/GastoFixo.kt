@@ -15,4 +15,13 @@ data class GastoFixo(
 	val ativo: Boolean = true,
 	val id: Long? = null,
 	val idPublico: UUID = UUID.randomUUID(),
-)
+) {
+
+	fun paraLancamento(): Lancamento.Despesa =
+		Lancamento.Despesa(
+			valor = valorPadrao,
+			pago = false,
+			descricao = descricao,
+			origemGastoFixo = true,
+		)
+}

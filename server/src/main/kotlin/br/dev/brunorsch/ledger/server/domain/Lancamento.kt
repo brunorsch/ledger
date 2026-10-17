@@ -25,6 +25,7 @@ sealed class Lancamento {
 		val pago: Boolean,
 		override val descricao: String,
 		val pagoEm: Instant? = null,
+		val origemGastoFixo: Boolean = false,
 		override val id: Long? = null,
 		override val idPublico: UUID = UUID.randomUUID(),
 	) : Lancamento() {

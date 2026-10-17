@@ -88,6 +88,10 @@ class MigracoesPostgresTest : SuportePostgres() {
 			"SELECT data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'lancamentos' AND column_name = 'pago'",
 			String::class.java,
 		)
+		val origemGastoFixoTipo = jdbcTemplate.queryForObject(
+			"SELECT data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'lancamentos' AND column_name = 'origem_gasto_fixo'",
+			String::class.java,
+		)
 		val fkUsuarios = jdbcTemplate.queryForObject(
 			"SELECT COUNT(*) FROM pg_constraint WHERE conrelid = 'lancamentos'::regclass AND contype = 'f' AND confrelid = 'usuarios'::regclass",
 			Long::class.java,
@@ -101,6 +105,7 @@ class MigracoesPostgresTest : SuportePostgres() {
 		assertThat(valorTipo).isEqualTo("numeric")
 		assertThat(valorAnulavel).isEqualTo("NO")
 		assertThat(pagoTipo).isEqualTo("boolean")
+		assertThat(origemGastoFixoTipo).isEqualTo("boolean")
 		assertThat(fkUsuarios).isEqualTo(1L)
 		assertThat(fkMeses).isEqualTo(1L)
 	}

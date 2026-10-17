@@ -8,8 +8,10 @@ import br.dev.brunorsch.ledger.server.dto.AlterarAlternanciasRequest
 import br.dev.brunorsch.ledger.server.dto.AlternanciasResponse
 import br.dev.brunorsch.ledger.server.dto.CriarMesRequest
 import br.dev.brunorsch.ledger.server.dto.MesSumarioResponse
+import br.dev.brunorsch.ledger.server.exception.MesJaExisteException
 import br.dev.brunorsch.ledger.server.exception.MesNaoEncontradoException
 import br.dev.brunorsch.ledger.server.exception.ValidacaoException
+import br.dev.brunorsch.ledger.server.repository.GastoFixoRepository
 import br.dev.brunorsch.ledger.server.repository.LancamentoRepository
 import br.dev.brunorsch.ledger.server.repository.MesRepository
 import org.springframework.stereotype.Service
@@ -22,6 +24,7 @@ import java.util.UUID
 class MesService(
 	private val mesRepository: MesRepository,
 	private val lancamentoRepository: LancamentoRepository,
+	private val gastoFixoRepository: GastoFixoRepository,
 ) {
 
 	fun criar(request: CriarMesRequest, usuarioId: Long): Mes {
@@ -29,6 +32,10 @@ class MesService(
 			Mes.validarMesReferenciaPrimeiroDia(request.mesReferencia)
 		} catch (ex: IllegalArgumentException) {
 			throw ValidacaoException(ex.message!!)
+		}
+
+		if (mesRepository.findByMesReferenciaAndUsuarioId(request.mesReferencia, usuarioId) != null) {
+			throw MesJaExisteException(request.mesReferencia.toString())
 		}
 
 		val mes = Mes(
@@ -42,7 +49,25 @@ class MesService(
 			deficit = Dinheiro.ZERO,
 			criadoEm = Instant.now(),
 		)
-		return mesRepository.save(mes)
+		val salvo = mesRepository.save(mes)
+		gerarLancamentosDeGastosFixos(salvo.id!!, usuarioId)
+		return salvo
+	}
+
+	/**
+	 * Copia os gastos fixos ativos do usuário para o mês como despesas.
+	 *
+	 * A guarda evita duplicar os lançamentos quando o método roda mais de uma
+	 * vez para o mesmo mês: só gera para meses que ainda não têm lançamentos
+	 * originados de gastos fixos, mesmo que já existam lançamentos manuais.
+	 */
+	fun gerarLancamentosDeGastosFixos(mesId: Long, usuarioId: Long) {
+		if (lancamentoRepository.existeOrigemGastoFixo(mesId, usuarioId)) {
+			return
+		}
+		gastoFixoRepository.listarAtivos(usuarioId).forEach { gastoFixo ->
+			lancamentoRepository.criar(mesId, usuarioId, gastoFixo.paraLancamento())
+		}
 	}
 
 	fun obterPorIdPublico(idPublico: UUID, usuarioId: Long): Mes =
