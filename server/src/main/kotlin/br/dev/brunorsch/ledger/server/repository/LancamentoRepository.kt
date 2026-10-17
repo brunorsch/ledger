@@ -1,20 +1,37 @@
 package br.dev.brunorsch.ledger.server.repository
 
+import br.dev.brunorsch.ledger.server.domain.Dinheiro
 import br.dev.brunorsch.ledger.server.domain.Lancamento
-import br.dev.brunorsch.ledger.server.domain.LancamentoRegistro
-import org.springframework.data.repository.CrudRepository
+import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.jdbc.core.RowMapper
+import org.springframework.stereotype.Repository
 
-/**
- * Repositório dos registros de lançamentos (tabela `lancamentos`).
- *
- * O sumário usa [listarPorMes], que devolve os lançamentos do mês como
- * objetos de domínio a partir da method query derivada.
- */
-interface LancamentoRepository : CrudRepository<LancamentoRegistro, Long> {
+@Repository
+class LancamentoRepository(private val jdbcTemplate: JdbcTemplate) {
 
-	fun findAllByMesIdAndUsuarioIdOrderById(mesId: Long, usuarioId: Long): List<LancamentoRegistro>
-
-	/** Lançamentos do mês convertidos para o domínio, em ordem de criação. */
 	fun listarPorMes(mesId: Long, usuarioId: Long): List<Lancamento> =
-		findAllByMesIdAndUsuarioIdOrderById(mesId, usuarioId).map(LancamentoRegistro::paraDominio)
+		jdbcTemplate.query(
+			"""
+			SELECT tipo, valor, pago, descricao
+			FROM lancamentos
+			WHERE mes_id = ? AND usuario_id = ?
+			ORDER BY id
+			""".trimIndent(),
+			rowMapper,
+			mesId,
+			usuarioId,
+		)
+
+	private val rowMapper = RowMapper { rs, _ ->
+		val valor = Dinheiro(rs.getBigDecimal("valor"))
+		when (rs.getString("tipo")) {
+			"RECEITA" -> Lancamento.Receita(valor = valor, descricao = rs.getString("descricao"))
+			"DESPESA" -> Lancamento.Despesa(
+				valor = valor,
+				pago = rs.getBoolean("pago"),
+				descricao = rs.getString("descricao"),
+			)
+			else -> throw IllegalStateException("tipo de lançamento desconhecido: ${rs.getString("tipo")}")
+		}
+	}
 }

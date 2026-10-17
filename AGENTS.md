@@ -45,6 +45,7 @@ Gradle multiprojeto (módulos `web` e `server`). O artefato final é um único J
 - Sufixo de classes como `Controller`, `Repository`, `Service`, `DTO`, `Exception` podem ser mantidos em inglês 
 - Terminologia em inglês que são padrão como `get`, `set`, `unwrap`, `toString`, `equals`, `hashCode`, `compareTo`, `copy`, etc. podem ser mantidos em inglês
 - Separação de testes em Arrange, Act e Assert, mas sem explicitar com comentários. Deixando uma linha em branco para separar cada etapa.
+- Evitar comentários inúteis no código. Documentar só apenas o que for interessante documentar, como lógicas muito complexas ou decisões que não ficam claras só de ler o código.
 
 ## Frontend
 
@@ -66,6 +67,7 @@ Gradle multiprojeto (módulos `web` e `server`). O artefato final é um único J
 4. Rode os testes até passarem e informe o comando usado.
 5. Siga `backlog instructions task-execution` e `backlog instructions task-finalization`, atualize o status da task e faça um commit por task, citando o id dela.
 6. Diante de ambiguidade ou decisão de negócio, pare e pergunte. Não decida.
+7. Antes de commitar, pare e pergunte. O usuário precisa revisar todo código gerado antes do commit.
 
 ## Segurança
 
