@@ -1,0 +1,65 @@
+export type MesResponse = {
+  id: string
+  mesReferencia: string
+  parametrosCalculo: ParametrosCalculoResponse
+  alternarInvestir: boolean
+  alternarLazer: boolean
+  deficit: string
+  criadoEm: string
+}
+
+export type ParametrosCalculoResponse = {
+  versaoEsquema: number
+  percentuais: {
+    essenciais: number
+    lazer: number
+  }
+  tetos: {
+    essenciais: string
+    lazer: string
+  }
+}
+
+export type MesSumarioResponse = {
+  receitas: string
+  despesas: string
+  aPagar: string
+  restante: string
+  distribuicao: DistribuicaoSobrasResponse
+}
+
+export type DistribuicaoSobrasResponse = {
+  essenciais: string
+  lazer: string
+  reservas: string
+  deficit: string
+}
+
+export type LancamentoDespesaResponse = {
+  id: string
+  tipo: 'DESPESA'
+  descricao: string
+  valor: string
+  pago: boolean
+  pagoEm: string | null
+  origemGastoFixo: boolean
+}
+
+export type LancamentoReceitaResponse = {
+  id: string
+  tipo: 'RECEITA'
+  descricao: string
+  valor: string
+}
+
+export type LancamentoResponse = LancamentoDespesaResponse | LancamentoReceitaResponse
+
+export class ErroApi extends Error {
+  readonly status: number
+
+  constructor(message: string, status: number) {
+    super(message)
+    this.status = status
+    this.name = 'ErroApi'
+  }
+}
