@@ -53,6 +53,11 @@ Gradle multiprojeto (módulos `web` e `server`). O artefato final é um único J
 - React com TypeScript estrito e pnpm.
 - Não faz conta de dinheiro: recebe strings da API e só formata para exibição em BRL.
 - Sem testes de frontend por enquanto. Não instale Vitest.
+- Utilizar Tailwind para estilização.
+- Utilizar Zustand para estado global.
+- Componentizar sempre que alguma parte da tela for reutilizável. 
+- Quebrar em subcomponentes menores telas muito complexas.
+- Novas libs ainda não instaladas são bem vindas, mas deve ser aprovada pelo usuário.
 
 ## Testes
 
