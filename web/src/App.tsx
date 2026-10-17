@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ErroApi } from './api/tipos.ts'
 import type { LancamentoResponse, MesResponse, MesSumarioResponse } from './api/tipos.ts'
 import { listarLancamentos, obterMesPorReferencia, obterSumario } from './api/cliente.ts'
+import { Box } from './Box.tsx'
 import { formatarBRL } from './formato/brl.ts'
 
 const MES_ATUAL = (() => {
@@ -128,31 +129,23 @@ function TelaPronto({
   sumario: MesSumarioResponse
   lancamentos: LancamentoResponse[]
 }) {
+  const despesas = lancamentos.filter((l) => l.tipo === 'DESPESA')
+  const receitas = lancamentos.filter((l) => l.tipo === 'RECEITA')
+
   return (
     <div className="grid gap-6 lg:grid-cols-3">
-      <section className="lg:col-span-2">
-        <div className="rounded-2xl border border-line bg-paper shadow-sm">
-          <div className="flex items-center justify-between border-b border-line px-5 py-4 md:px-6">
-            <h2 className="font-display text-lg font-medium">Lançamentos</h2>
-            <span className="rounded-full bg-fill px-2.5 py-1 text-xs font-medium text-muted">
-              {lancamentos.length}
-            </span>
-          </div>
-
-          {lancamentos.length === 0 ? (
-            <div className="px-5 py-16 text-center md:px-6">
-              <p className="text-muted">Nenhum lançamento neste mês.</p>
-            </div>
-          ) : (
-            <ul className="divide-y divide-line">
-              {lancamentos.map((lancamento) => (
-                <li key={lancamento.id}>
-                  <LancamentoItem lancamento={lancamento} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+      <section className="space-y-6 lg:col-span-2">
+        <CardLancamentos
+          titulo="Despesas"
+          lancamentos={despesas}
+          destaque
+          mensagemVazia="Nenhuma despesa neste mês."
+        />
+        <CardLancamentos
+          titulo="Receitas"
+          lancamentos={receitas}
+          mensagemVazia="Nenhuma receita neste mês."
+        />
       </section>
 
       <aside className="space-y-6">
@@ -160,6 +153,36 @@ function TelaPronto({
         <BlocoDistribuicao sumario={sumario} mes={mes} />
       </aside>
     </div>
+  )
+}
+
+function CardLancamentos({
+  titulo,
+  lancamentos,
+  destaque = false,
+  mensagemVazia,
+}: {
+  titulo: string
+  lancamentos: LancamentoResponse[]
+  destaque?: boolean
+  mensagemVazia: string
+}) {
+  return (
+    <Box titulo={titulo} contagem={lancamentos.length} destaque={destaque}>
+      {lancamentos.length === 0 ? (
+        <div className="px-5 py-16 text-center md:px-6">
+          <p className="text-muted">{mensagemVazia}</p>
+        </div>
+      ) : (
+        <ul className="divide-y divide-line">
+          {lancamentos.map((lancamento) => (
+            <li key={lancamento.id}>
+              <LancamentoItem lancamento={lancamento} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </Box>
   )
 }
 
@@ -222,10 +245,7 @@ function BlocoSumario({ sumario }: { sumario: MesSumarioResponse }) {
   ]
 
   return (
-    <div className="rounded-2xl border border-line bg-paper shadow-sm">
-      <div className="border-b border-line px-5 py-4 md:px-6">
-        <h2 className="font-display text-lg font-medium">Sumário</h2>
-      </div>
+    <Box titulo="Sumário">
       <dl className="divide-y divide-line">
         {itens.map(({ rotulo, valor, positivo, destaque }) => (
           <div key={rotulo} className="flex items-center justify-between px-5 py-3.5 md:px-6">
@@ -246,7 +266,7 @@ function BlocoSumario({ sumario }: { sumario: MesSumarioResponse }) {
           </div>
         ))}
       </dl>
-    </div>
+    </Box>
   )
 }
 
@@ -267,16 +287,12 @@ function BlocoDistribuicao({ sumario, mes }: { sumario: MesSumarioResponse; mes:
         { rotulo: 'Reservas', valor: distribuicao.reservas },
       ]
 
+  const nota = restanteNegativo
+    ? undefined
+    : `Baseado nos parâmetros de ${formatarMesCurto(mes.mesReferencia)}.`
+
   return (
-    <div className="rounded-2xl border border-line bg-paper shadow-sm">
-      <div className="border-b border-line px-5 py-4 md:px-6">
-        <h2 className="font-display text-lg font-medium">Distribuição das sobras</h2>
-        {!restanteNegativo && (
-          <p className="mt-1 text-xs text-muted">
-            Baseado nos parâmetros de {formatarMesCurto(mes.mesReferencia)}.
-          </p>
-        )}
-      </div>
+    <Box titulo="Distribuição das sobras" nota={nota}>
       <dl className="divide-y divide-line">
         {itens.map(({ rotulo, valor, destaque }) => (
           <div key={rotulo} className="flex items-center justify-between px-5 py-3.5 md:px-6">
@@ -291,7 +307,7 @@ function BlocoDistribuicao({ sumario, mes }: { sumario: MesSumarioResponse; mes:
           </div>
         ))}
       </dl>
-    </div>
+    </Box>
   )
 }
 
