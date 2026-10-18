@@ -74,6 +74,10 @@ class MesService(
 		mesRepository.findByIdPublicoAndUsuarioId(idPublico, usuarioId)
 			?: throw MesNaoEncontradoException()
 
+	fun obterUltimo(usuarioId: Long): Mes =
+		mesRepository.findFirstByUsuarioIdOrderByMesReferenciaDesc(usuarioId)
+			?: throw MesNaoEncontradoException()
+
 	fun obterPorReferencia(referencia: String, usuarioId: Long): Mes {
 		val primeiroDia = try {
 			YearMonth.parse(referencia).atDay(1)

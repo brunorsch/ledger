@@ -6,6 +6,7 @@ import type {
   AlternanciasResponse,
   CriarGastoFixoCorpo,
   CriarLancamentoCorpo,
+  CriarMesCorpo,
   GastoFixoResponse,
   LancamentoResponse,
   MesResponse,
@@ -55,6 +56,17 @@ async function requisicao<T>(url: string, opcoes?: RequestInit): Promise<T> {
 
 export async function obterMesPorReferencia(referencia: string): Promise<MesResponse> {
   return requisicao<MesResponse>(`${API_BASE}/meses?referencia=${encodeURIComponent(referencia)}`)
+}
+
+export async function obterUltimoMes(): Promise<MesResponse> {
+  return requisicao<MesResponse>(`${API_BASE}/meses/ultimo`)
+}
+
+export async function criarMes(corpo: CriarMesCorpo): Promise<MesResponse> {
+  return requisicao<MesResponse>(`${API_BASE}/meses`, {
+    method: 'POST',
+    body: JSON.stringify(corpo),
+  })
 }
 
 export async function obterSumario(mesId: string): Promise<MesSumarioResponse> {

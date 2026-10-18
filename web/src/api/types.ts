@@ -76,6 +76,23 @@ export type AlternanciasResponse = {
   alternarLazer: boolean
 }
 
+export type CriarMesCorpo = {
+  mesReferencia: string
+  parametrosCalculo: {
+    versaoEsquema: number
+    percentuais: {
+      essenciais: number
+      lazer: number
+    }
+    tetos: {
+      essenciais: string
+      lazer: string
+    }
+  }
+  alternarInvestir: boolean
+  alternarLazer: boolean
+}
+
 export type GastoFixoResponse = {
   id: string
   descricao: string

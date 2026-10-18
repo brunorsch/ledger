@@ -4,7 +4,7 @@ import BalancoScreen from '@/screen/BalancoScreen'
 import GastosFixosScreen from '@/screen/GastosFixosScreen'
 import { mesAtual } from '@/format/mes'
 
-const REFERENCIA_REGEX = /^\d{4}-\d{2}$/
+const REFERENCIA_REGEX = /^\d{4}-(0[1-9]|1[0-2])$/
 
 function referenciaValidaOuAtual(referencia: string | undefined): string {
   return referencia && REFERENCIA_REGEX.test(referencia) ? referencia : mesAtual()

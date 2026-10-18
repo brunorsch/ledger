@@ -34,7 +34,7 @@ class MesController(
 	): ResponseEntity<MesResponse> {
 		val usuarioId = usuarioAutenticadoService.resolver(usuarioIdHeader)
 		val mes = mesService.criar(request, usuarioId)
-		return ResponseEntity.status(HttpStatus.CREATED).body(MesResponse.de(mes))
+		return ResponseEntity.status(HttpStatus.CREATED).body(MesResponse.fromDomain(mes))
 	}
 
 	@GetMapping("/{id}")
@@ -43,7 +43,15 @@ class MesController(
 		@RequestHeader(name = UsuarioAutenticadoService.HEADER_USUARIO_ID, required = false) usuarioIdHeader: Long?,
 	): MesResponse {
 		val usuarioId = usuarioAutenticadoService.resolver(usuarioIdHeader)
-		return MesResponse.de(mesService.obterPorIdPublico(id, usuarioId))
+		return MesResponse.fromDomain(mesService.obterPorIdPublico(id, usuarioId))
+	}
+
+	@GetMapping("/ultimo")
+	fun obterUltimo(
+		@RequestHeader(name = UsuarioAutenticadoService.HEADER_USUARIO_ID, required = false) usuarioIdHeader: Long?,
+	): MesResponse {
+		val usuarioId = usuarioAutenticadoService.resolver(usuarioIdHeader)
+		return MesResponse.fromDomain(mesService.obterUltimo(usuarioId))
 	}
 
 	@GetMapping
@@ -52,7 +60,7 @@ class MesController(
 		@RequestHeader(name = UsuarioAutenticadoService.HEADER_USUARIO_ID, required = false) usuarioIdHeader: Long?,
 	): MesResponse {
 		val usuarioId = usuarioAutenticadoService.resolver(usuarioIdHeader)
-		return MesResponse.de(mesService.obterPorReferencia(referencia, usuarioId))
+		return MesResponse.fromDomain(mesService.obterPorReferencia(referencia, usuarioId))
 	}
 
 	@GetMapping("/{id}/sumario")

@@ -6,10 +6,12 @@ import {
   alterarLancamento,
   criarGastoFixo,
   criarLancamento,
+  criarMes,
   listarGastosFixos,
   listarLancamentos,
   obterMesPorReferencia,
   obterSumario,
+  obterUltimoMes,
   removerGastoFixo,
   removerLancamento,
 } from '@/api/client'
@@ -19,10 +21,12 @@ import type {
   AlterarLancamentoCorpo,
   CriarGastoFixoCorpo,
   CriarLancamentoCorpo,
+  CriarMesCorpo,
 } from '@/api/types'
 
 const chaves = {
   mes: (referencia: string) => ['mes', referencia] as const,
+  ultimoMes: () => ['ultimo-mes'] as const,
   sumario: (mesId: string) => ['sumario', mesId] as const,
   lancamentos: (mesId: string) => ['lancamentos', mesId] as const,
   gastosFixos: () => ['gastos-fixos'] as const,
@@ -32,6 +36,25 @@ export function useMes(referencia: string) {
   return useQuery({
     queryKey: chaves.mes(referencia),
     queryFn: () => obterMesPorReferencia(referencia),
+  })
+}
+
+export function useUltimoMes(habilitado: boolean) {
+  return useQuery({
+    queryKey: chaves.ultimoMes(),
+    queryFn: obterUltimoMes,
+    enabled: habilitado,
+  })
+}
+
+export function useCriarMes(referencia: string) {
+  const cliente = useQueryClient()
+
+  return useMutation({
+    mutationFn: (corpo: CriarMesCorpo) => criarMes(corpo),
+    onSuccess: () => {
+      cliente.invalidateQueries({ queryKey: chaves.mes(referencia) })
+    },
   })
 }
 

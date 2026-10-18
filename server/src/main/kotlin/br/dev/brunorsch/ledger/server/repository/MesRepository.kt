@@ -10,4 +10,6 @@ interface MesRepository : CrudRepository<Mes, Long> {
 	fun findByIdPublicoAndUsuarioId(idPublico: UUID, usuarioId: Long): Mes?
 
 	fun findByMesReferenciaAndUsuarioId(mesReferencia: LocalDate, usuarioId: Long): Mes?
+
+	fun findFirstByUsuarioIdOrderByMesReferenciaDesc(usuarioId: Long): Mes?
 }

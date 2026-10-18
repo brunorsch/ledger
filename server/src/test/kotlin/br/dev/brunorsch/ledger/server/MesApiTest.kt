@@ -149,6 +149,22 @@ class MesApiTest : SuportePostgres() {
 	}
 
 	@Test
+	fun `get ultimo retorna o mes mais recente do usuario`() {
+		criarMes(REQUEST_OUTUBRO)
+		criarMes(REQUEST_OUTUBRO.replace("2026-10-01", "2026-11-01"))
+
+		mockMvc.get("/api/v1/meses/ultimo")
+			.andExpect { status { isOk() } }
+			.andExpect { jsonPath("$.mesReferencia") { value("2026-11-01") } }
+	}
+
+	@Test
+	fun `get ultimo sem meses retorna 404`() {
+		mockMvc.get("/api/v1/meses/ultimo")
+			.andExpect { status { isNotFound() } }
+	}
+
+	@Test
 	fun `get por referencia com formato invalido retorna 400 com mensagem clara`() {
 		mockMvc.get("/api/v1/meses") { param("referencia", "outubro") }
 			.andExpect { status { isBadRequest() } }

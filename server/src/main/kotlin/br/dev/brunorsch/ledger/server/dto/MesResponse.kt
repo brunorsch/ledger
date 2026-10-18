@@ -18,7 +18,7 @@ data class MesResponse(
 	val criadoEm: Instant,
 ) {
 	companion object {
-		fun de(mes: Mes): MesResponse = MesResponse(
+		fun fromDomain(mes: Mes): MesResponse = MesResponse(
 			id = mes.idPublico,
 			mesReferencia = mes.mesReferencia,
 			parametrosCalculo = mes.parametrosCalculo,
