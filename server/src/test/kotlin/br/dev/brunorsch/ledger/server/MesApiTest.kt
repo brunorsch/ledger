@@ -127,7 +127,7 @@ class MesApiTest : SuportePostgres() {
 	fun `usuario nao consegue ler mes de outro usuario`() {
 		val id = criarMes(REQUEST_OUTUBRO)
 		jdbcTemplate.update(
-			"INSERT INTO usuarios (id, sujeito_provedor) OVERRIDING SYSTEM VALUE VALUES (2, 'outro-usuario')",
+			"INSERT INTO usuarios (id, identity_provider) OVERRIDING SYSTEM VALUE VALUES (2, 'outro-usuario')",
 		)
 
 		mockMvc.get("/api/v1/meses/$id") {

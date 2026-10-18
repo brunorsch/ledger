@@ -143,7 +143,7 @@ class MesAlternanciasApiTest : SuportePostgres() {
 	fun `mes de outro usuario retorna 404`() {
 		val id = criarMes()
 		jdbcTemplate.update(
-			"INSERT INTO usuarios (id, sujeito_provedor) OVERRIDING SYSTEM VALUE VALUES (2, 'outro-usuario')",
+			"INSERT INTO usuarios (id, identity_provider) OVERRIDING SYSTEM VALUE VALUES (2, 'outro-usuario')",
 		)
 
 		mockMvc.patch("/api/v1/meses/$id/alternancias") {

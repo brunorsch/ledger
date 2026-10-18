@@ -218,7 +218,7 @@ class MesSumarioApiTest : SuportePostgres() {
 	fun `sumario de mes inexistente ou de outro usuario retorna 404`() {
 		val id = criarMes()
 		jdbcTemplate.update(
-			"INSERT INTO usuarios (id, sujeito_provedor) OVERRIDING SYSTEM VALUE VALUES (2, 'outro-usuario')",
+			"INSERT INTO usuarios (id, identity_provider) OVERRIDING SYSTEM VALUE VALUES (2, 'outro-usuario')",
 		)
 
 		mockMvc.get("/api/v1/meses/00000000-0000-0000-0000-000000000000/sumario")

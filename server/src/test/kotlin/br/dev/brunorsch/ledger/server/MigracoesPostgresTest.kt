@@ -26,17 +26,17 @@ class MigracoesPostgresTest : SuportePostgres() {
 	}
 
 	@Test
-	fun `tabela usuarios tem id bigint, sujeito_provedor varchar anulavel e criado_em timestamptz`() {
+	fun `tabela usuarios tem id bigint, identity_provider varchar anulavel e criado_em timestamptz`() {
 		val id = jdbcTemplate.queryForObject(
 			"SELECT data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'usuarios' AND column_name = 'id'",
 			String::class.java,
 		)
-		val sujeitoProvedorTipo = jdbcTemplate.queryForObject(
-			"SELECT data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'usuarios' AND column_name = 'sujeito_provedor'",
+		val identityProviderTipo = jdbcTemplate.queryForObject(
+			"SELECT data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'usuarios' AND column_name = 'identity_provider'",
 			String::class.java,
 		)
-		val sujeitoProvedorAnulavel = jdbcTemplate.queryForObject(
-			"SELECT is_nullable FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'usuarios' AND column_name = 'sujeito_provedor'",
+		val identityProviderAnulavel = jdbcTemplate.queryForObject(
+			"SELECT is_nullable FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'usuarios' AND column_name = 'identity_provider'",
 			String::class.java,
 		)
 		val criadoEm = jdbcTemplate.queryForObject(
@@ -45,8 +45,8 @@ class MigracoesPostgresTest : SuportePostgres() {
 		)
 
 		assertThat(id).isEqualTo("bigint")
-		assertThat(sujeitoProvedorTipo).isEqualTo("character varying")
-		assertThat(sujeitoProvedorAnulavel).isEqualTo("YES")
+		assertThat(identityProviderTipo).isEqualTo("character varying")
+		assertThat(identityProviderAnulavel).isEqualTo("YES")
 		assertThat(criadoEm).isEqualTo("timestamp with time zone")
 	}
 
@@ -137,10 +137,10 @@ class MigracoesPostgresTest : SuportePostgres() {
 
 	@Test
 	fun `seed insere um unico usuario com id 1`() {
-		val linhas = jdbcTemplate.queryForList("SELECT id, sujeito_provedor FROM usuarios WHERE id = 1")
+		val linhas = jdbcTemplate.queryForList("SELECT id, identity_provider FROM usuarios WHERE id = 1")
 
 		assertThat(linhas).hasSize(1)
-		assertThat(linhas[0]["sujeito_provedor"]).isNull()
+		assertThat(linhas[0]["identity_provider"]).isNull()
 	}
 
 	@Test
