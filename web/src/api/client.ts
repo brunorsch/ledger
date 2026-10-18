@@ -1,4 +1,4 @@
-import { ErroApi } from './tipos.ts'
+import { ErroApi } from '@/api/types'
 import type {
   AlterarAlternanciasCorpo,
   AlterarLancamentoCorpo,
@@ -7,7 +7,7 @@ import type {
   LancamentoResponse,
   MesResponse,
   MesSumarioResponse,
-} from './tipos.ts'
+} from '@/api/types'
 
 const API_BASE = '/api/v1'
 

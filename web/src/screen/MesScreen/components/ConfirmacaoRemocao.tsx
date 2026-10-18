@@ -1,8 +1,8 @@
 import { useRef, useEffect, useState } from 'react'
-import { Botao } from '../componentes/Botao.tsx'
-import { ErroApi, type LancamentoResponse } from '../api/tipos.ts'
-import { useRemoverLancamento } from '../api/consultas.ts'
-import { formatarBRL } from '../formato/brl.ts'
+import { Botao } from '@/components'
+import { ErroApi, type LancamentoResponse } from '@/api/types'
+import { useRemoverLancamento } from '@/api/queries'
+import { formatarBRL } from '@/format/brl'
 
 type ConfirmacaoRemocaoProps = {
   mesId: string
@@ -31,7 +31,7 @@ export function ConfirmacaoRemocao({
     try {
       await remover.mutateAsync(lancamento.id)
       onSucesso()
-    } catch (erroRemocao) {
+    } catch (erroRemocao: unknown) {
       const mensagem =
         erroRemocao instanceof ErroApi
           ? erroRemocao.mensagem

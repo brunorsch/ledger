@@ -1,10 +1,8 @@
-import { useState } from 'react'
-import { Botao } from '../componentes/Botao.tsx'
-import { CampoTexto } from '../componentes/CampoTexto.tsx'
-import { CampoValor } from '../componentes/CampoValor.tsx'
-import { ErroApi, type LancamentoResponse } from '../api/tipos.ts'
-import { useAlterarLancamento, useCriarLancamento } from '../api/consultas.ts'
-import { normalizarValorMonetario } from '../formato/valor.ts'
+import { useState, type ChangeEvent, type FormEvent } from 'react'
+import { Botao, CampoTexto, CampoValor } from '@/components'
+import { ErroApi, type LancamentoResponse } from '@/api/types'
+import { useAlterarLancamento, useCriarLancamento } from '@/api/queries'
+import { normalizarValorMonetario } from '@/format/valor'
 
 type FormularioLancamentoProps = {
   mesId: string
@@ -48,7 +46,7 @@ export function FormularioLancamento({
     return Object.keys(proximosErros).length === 0
   }
 
-  async function aoSubmeter(evento: React.FormEvent) {
+  async function aoSubmeter(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
     setErroGeral(null)
 
@@ -63,10 +61,18 @@ export function FormularioLancamento({
         await criar.mutateAsync({ tipo, descricao: descricao.trim(), valor: valorNormalizado })
       }
       onSucesso()
-    } catch (erro) {
+    } catch (erro: unknown) {
       const mensagem = erro instanceof ErroApi ? erro.mensagem : 'Não foi possível salvar o lançamento.'
       setErroGeral(mensagem)
     }
+  }
+
+  function aoAlterarDescricao(evento: ChangeEvent<HTMLInputElement>) {
+    setDescricao(evento.target.value)
+  }
+
+  function aoAlterarValor(evento: ChangeEvent<HTMLInputElement>) {
+    setValor(evento.target.value)
   }
 
   return (
@@ -74,7 +80,7 @@ export function FormularioLancamento({
       <CampoTexto
         label="Descrição"
         value={descricao}
-        onChange={(evento) => setDescricao(evento.target.value)}
+        onChange={aoAlterarDescricao}
         erro={erros.descricao}
         disabled={enviando}
         placeholder="Ex: Mercado"
@@ -83,7 +89,7 @@ export function FormularioLancamento({
       <CampoValor
         label="Valor (R$)"
         value={valor}
-        onChange={(evento) => setValor(evento.target.value)}
+        onChange={aoAlterarValor}
         erro={erros.valor}
         disabled={enviando}
         placeholder="0,00"

@@ -2,13 +2,15 @@ import { useEffect, useRef, type ReactNode } from 'react'
 
 type ModalProps = {
   aberto: boolean
-  titulo: string
+  titulo: string | (() => string)
   children: ReactNode
   onFechar: () => void
 }
 
 export function Modal({ aberto, titulo, children, onFechar }: ModalProps) {
   const painelRef = useRef<HTMLDivElement>(null)
+
+  const tituloTexto = typeof titulo === 'function' ? aberto ? titulo() : '-' : titulo
 
   useEffect(() => {
     if (!aberto) return
@@ -44,7 +46,7 @@ export function Modal({ aberto, titulo, children, onFechar }: ModalProps) {
       >
         <div className="border-b border-line px-5 py-4 md:px-6">
           <h2 id="modal-titulo" className="font-display text-lg font-medium">
-            {titulo}
+            {tituloTexto}
           </h2>
         </div>
         <div className="px-5 py-5 md:px-6 md:py-6">{children}</div>

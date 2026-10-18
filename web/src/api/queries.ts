@@ -8,12 +8,12 @@ import {
   obterMesPorReferencia,
   obterSumario,
   removerLancamento,
-} from './cliente.ts'
+} from '@/api/client'
 import type {
   AlterarAlternanciasCorpo,
   AlterarLancamentoCorpo,
   CriarLancamentoCorpo,
-} from './tipos.ts'
+} from '@/api/types'
 
 const chaves = {
   mes: (referencia: string) => ['mes', referencia] as const,
