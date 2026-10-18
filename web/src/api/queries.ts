@@ -2,16 +2,22 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   alternarPagoLancamento,
   alterarAlternancias,
+  alterarGastoFixo,
   alterarLancamento,
+  criarGastoFixo,
   criarLancamento,
+  listarGastosFixos,
   listarLancamentos,
   obterMesPorReferencia,
   obterSumario,
+  removerGastoFixo,
   removerLancamento,
 } from '@/api/client'
 import type {
   AlterarAlternanciasCorpo,
+  AlterarGastoFixoCorpo,
   AlterarLancamentoCorpo,
+  CriarGastoFixoCorpo,
   CriarLancamentoCorpo,
 } from '@/api/types'
 
@@ -19,6 +25,7 @@ const chaves = {
   mes: (referencia: string) => ['mes', referencia] as const,
   sumario: (mesId: string) => ['sumario', mesId] as const,
   lancamentos: (mesId: string) => ['lancamentos', mesId] as const,
+  gastosFixos: () => ['gastos-fixos'] as const,
 }
 
 export function useMes(referencia: string) {
@@ -101,6 +108,47 @@ export function useAlterarAlternancias(mesId: string) {
     onSuccess: () => {
       cliente.invalidateQueries({ queryKey: chaves.sumario(mesId) })
       cliente.invalidateQueries({ queryKey: ['mes'] })
+    },
+  })
+}
+
+export function useGastosFixos() {
+  return useQuery({
+    queryKey: chaves.gastosFixos(),
+    queryFn: listarGastosFixos,
+  })
+}
+
+export function useCriarGastoFixo() {
+  const cliente = useQueryClient()
+
+  return useMutation({
+    mutationFn: (corpo: CriarGastoFixoCorpo) => criarGastoFixo(corpo),
+    onSuccess: () => {
+      cliente.invalidateQueries({ queryKey: chaves.gastosFixos() })
+    },
+  })
+}
+
+export function useAlterarGastoFixo() {
+  const cliente = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, corpo }: { id: string; corpo: AlterarGastoFixoCorpo }) =>
+      alterarGastoFixo(id, corpo),
+    onSuccess: () => {
+      cliente.invalidateQueries({ queryKey: chaves.gastosFixos() })
+    },
+  })
+}
+
+export function useRemoverGastoFixo() {
+  const cliente = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => removerGastoFixo(id),
+    onSuccess: () => {
+      cliente.invalidateQueries({ queryKey: chaves.gastosFixos() })
     },
   })
 }

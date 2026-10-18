@@ -1,9 +1,12 @@
 import { ErroApi } from '@/api/types'
 import type {
   AlterarAlternanciasCorpo,
+  AlterarGastoFixoCorpo,
   AlterarLancamentoCorpo,
   AlternanciasResponse,
+  CriarGastoFixoCorpo,
   CriarLancamentoCorpo,
+  GastoFixoResponse,
   LancamentoResponse,
   MesResponse,
   MesSumarioResponse,
@@ -105,5 +108,32 @@ export async function alterarAlternancias(
   return requisicao<AlternanciasResponse>(`${API_BASE}/meses/${mesId}/alternancias`, {
     method: 'PATCH',
     body: JSON.stringify(corpo),
+  })
+}
+
+export async function listarGastosFixos(): Promise<GastoFixoResponse[]> {
+  return requisicao<GastoFixoResponse[]>(`${API_BASE}/gastos-fixos`)
+}
+
+export async function criarGastoFixo(corpo: CriarGastoFixoCorpo): Promise<GastoFixoResponse> {
+  return requisicao<GastoFixoResponse>(`${API_BASE}/gastos-fixos`, {
+    method: 'POST',
+    body: JSON.stringify(corpo),
+  })
+}
+
+export async function alterarGastoFixo(
+  id: string,
+  corpo: AlterarGastoFixoCorpo
+): Promise<GastoFixoResponse> {
+  return requisicao<GastoFixoResponse>(`${API_BASE}/gastos-fixos/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(corpo),
+  })
+}
+
+export async function removerGastoFixo(id: string): Promise<void> {
+  return requisicao<void>(`${API_BASE}/gastos-fixos/${id}`, {
+    method: 'DELETE',
   })
 }

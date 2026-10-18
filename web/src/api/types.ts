@@ -76,6 +76,24 @@ export type AlternanciasResponse = {
   alternarLazer: boolean
 }
 
+export type GastoFixoResponse = {
+  id: string
+  descricao: string
+  valorPadrao: string
+  ativo: boolean
+}
+
+export type CriarGastoFixoCorpo = {
+  descricao: string
+  valorPadrao: string
+}
+
+export type AlterarGastoFixoCorpo = {
+  descricao?: string
+  valorPadrao?: string
+  ativo?: boolean
+}
+
 export class ErroApi extends Error {
   readonly status: number
   readonly mensagem: string
