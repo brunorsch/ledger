@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
-import type { LancamentoResponse, MesResponse, MesSumarioResponse } from './api/tipos.ts'
+import { ErroApi, type LancamentoResponse, type MesResponse, type MesSumarioResponse } from './api/tipos.ts'
 import {
+  useAlterarAlternancias,
   useAlternarPagoLancamento,
   useLancamentos,
   useMes,
@@ -8,6 +9,7 @@ import {
 } from './api/consultas.ts'
 import { Box } from './Box.tsx'
 import { Botao } from './componentes/Botao.tsx'
+import { Interruptor } from './componentes/Interruptor.tsx'
 import { Modal } from './componentes/Modal.tsx'
 import { formatarBRL } from './formato/brl.ts'
 import { ConfirmacaoRemocao } from './lancamentos/ConfirmacaoRemocao.tsx'
@@ -242,6 +244,7 @@ function TelaPronto({
       <aside className="space-y-6">
         <BlocoSumario sumario={sumario} />
         <BlocoDistribuicao sumario={sumario} mesReferencia={mes.mesReferencia} />
+        <BlocoConfiguracoes mes={mes} />
       </aside>
     </div>
   )
@@ -475,6 +478,65 @@ function BlocoDistribuicao({ sumario, mesReferencia }: { sumario: MesSumarioResp
       </dl>
     </Box>
   )
+}
+
+function BlocoConfiguracoes({ mes }: { mes: MesResponse }) {
+  const alternar = useAlterarAlternancias(mes.id)
+  const [erro, setErro] = useState<string | null>(null)
+
+  const alternarInvestir = Boolean(mes.alternarInvestir)
+  const alternarLazer = Boolean(mes.alternarLazer)
+
+  async function aoAlternarInvestir(ligado: boolean) {
+    setErro(null)
+
+    try {
+      await alternar.mutateAsync({ alternarInvestir: ligado })
+    } catch (err) {
+      setErro(mensagemDeErroAoAlternar(err))
+    }
+  }
+
+  async function aoAlternarLazer(ligado: boolean) {
+    setErro(null)
+
+    try {
+      await alternar.mutateAsync({ alternarLazer: ligado })
+    } catch (err) {
+      setErro(mensagemDeErroAoAlternar(err))
+    }
+  }
+
+  return (
+    <Box titulo="Configurações">
+      <div className="space-y-4 px-5 py-4 md:px-6">
+        <Interruptor
+          rotulo="Investir"
+          descricao="Reservar parte do restante para investimentos."
+          checked={alternarInvestir}
+          disabled={alternar.isPending}
+          onChange={aoAlternarInvestir}
+        />
+        <Interruptor
+          rotulo="Lazer"
+          descricao="Separar parcela do restante para lazer."
+          checked={alternarLazer}
+          disabled={alternar.isPending}
+          onChange={aoAlternarLazer}
+        />
+        {erro && (
+          <p className="text-sm text-danger" role="alert">
+            {erro}
+          </p>
+        )}
+      </div>
+    </Box>
+  )
+}
+
+function mensagemDeErroAoAlternar(err: unknown): string {
+  if (err instanceof ErroApi) return err.mensagem
+  return 'Não foi possível salvar. Tente novamente.'
 }
 
 export default App

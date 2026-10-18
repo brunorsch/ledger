@@ -1,6 +1,8 @@
 import { ErroApi } from './tipos.ts'
 import type {
+  AlterarAlternanciasCorpo,
   AlterarLancamentoCorpo,
+  AlternanciasResponse,
   CriarLancamentoCorpo,
   LancamentoResponse,
   MesResponse,
@@ -93,5 +95,15 @@ export async function alternarPagoLancamento(
 export async function removerLancamento(id: string): Promise<void> {
   return requisicao<void>(`${API_BASE}/lancamentos/${id}`, {
     method: 'DELETE',
+  })
+}
+
+export async function alterarAlternancias(
+  mesId: string,
+  corpo: AlterarAlternanciasCorpo
+): Promise<AlternanciasResponse> {
+  return requisicao<AlternanciasResponse>(`${API_BASE}/meses/${mesId}/alternancias`, {
+    method: 'PATCH',
+    body: JSON.stringify(corpo),
   })
 }

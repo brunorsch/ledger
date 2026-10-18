@@ -66,6 +66,16 @@ export type AlterarLancamentoCorpo = {
   pago?: boolean
 }
 
+export type AlterarAlternanciasCorpo = {
+  alternarInvestir?: boolean
+  alternarLazer?: boolean
+}
+
+export type AlternanciasResponse = {
+  alternarInvestir: boolean
+  alternarLazer: boolean
+}
+
 export class ErroApi extends Error {
   readonly status: number
   readonly mensagem: string

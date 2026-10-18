@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   alternarPagoLancamento,
+  alterarAlternancias,
   alterarLancamento,
   criarLancamento,
   listarLancamentos,
@@ -8,7 +9,11 @@ import {
   obterSumario,
   removerLancamento,
 } from './cliente.ts'
-import type { AlterarLancamentoCorpo, CriarLancamentoCorpo } from './tipos.ts'
+import type {
+  AlterarAlternanciasCorpo,
+  AlterarLancamentoCorpo,
+  CriarLancamentoCorpo,
+} from './tipos.ts'
 
 const chaves = {
   mes: (referencia: string) => ['mes', referencia] as const,
@@ -85,5 +90,17 @@ export function useRemoverLancamento(mesId: string) {
   return useMutation({
     mutationFn: (id: string) => removerLancamento(id),
     onSuccess: invalidar,
+  })
+}
+
+export function useAlterarAlternancias(mesId: string) {
+  const cliente = useQueryClient()
+
+  return useMutation({
+    mutationFn: (corpo: AlterarAlternanciasCorpo) => alterarAlternancias(mesId, corpo),
+    onSuccess: () => {
+      cliente.invalidateQueries({ queryKey: chaves.sumario(mesId) })
+      cliente.invalidateQueries({ queryKey: ['mes'] })
+    },
   })
 }
