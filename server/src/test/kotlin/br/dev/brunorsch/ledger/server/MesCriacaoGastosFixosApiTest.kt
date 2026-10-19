@@ -35,16 +35,14 @@ class MesCriacaoGastosFixosApiTest : SuportePostgres() {
 	@Autowired
 	lateinit var mesService: MesService
 
-	companion object {
-		private const val USUARIO_SEED = 1L
-	}
-
 	// AC #1: mês criado sem gastos fixos ativos nasce sem lançamentos.
 	@Test
 	fun `mes criado sem gastos fixos ativos nasce sem lancamentos`() {
 		val mesId = criarMes()
 
-		mockMvc.get("/api/v1/meses/$mesId/lancamentos")
+		mockMvc.get("/api/v1/meses/$mesId/lancamentos") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$") { isArray() } }
 			.andExpect { jsonPath("$.length()") { value(0) } }
@@ -58,7 +56,9 @@ class MesCriacaoGastosFixosApiTest : SuportePostgres() {
 
 		val mesId = criarMes()
 
-		mockMvc.get("/api/v1/meses/$mesId/lancamentos")
+		mockMvc.get("/api/v1/meses/$mesId/lancamentos") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.length()") { value(2) } }
 			.andExpect { jsonPath("$[0].tipo") { value("DESPESA") } }
@@ -77,7 +77,9 @@ class MesCriacaoGastosFixosApiTest : SuportePostgres() {
 
 		val mesId = criarMes()
 
-		mockMvc.get("/api/v1/meses/$mesId/lancamentos")
+		mockMvc.get("/api/v1/meses/$mesId/lancamentos") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$[0].descricao") { value("aluguel") } }
 			.andExpect { jsonPath("$[0].valor") { value("250.50") } }
@@ -94,12 +96,15 @@ class MesCriacaoGastosFixosApiTest : SuportePostgres() {
 		val mesId = criarMes()
 
 		mockMvc.patch("/api/v1/gastos-fixos/$gastoFixoId") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"descricao": "aluguel novo", "valorPadrao": "999.00"}"""
 		}
 			.andExpect { status { isOk() } }
 
-		mockMvc.get("/api/v1/meses/$mesId/lancamentos")
+		mockMvc.get("/api/v1/meses/$mesId/lancamentos") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.length()") { value(1) } }
 			.andExpect { jsonPath("$[0].descricao") { value("aluguel") } }
@@ -113,7 +118,9 @@ class MesCriacaoGastosFixosApiTest : SuportePostgres() {
 
 		criarGastoFixo("aluguel", "250.50")
 
-		mockMvc.get("/api/v1/meses/$mesId/lancamentos")
+		mockMvc.get("/api/v1/meses/$mesId/lancamentos") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.length()") { value(0) } }
 	}
@@ -123,12 +130,16 @@ class MesCriacaoGastosFixosApiTest : SuportePostgres() {
 	fun `gasto fixo desativado nao gera lancamento na criacao do mes`() {
 		criarGastoFixo("aluguel", "250.50")
 		val desativado = criarGastoFixo("academia", "90.00")
-		mockMvc.delete("/api/v1/gastos-fixos/$desativado")
+		mockMvc.delete("/api/v1/gastos-fixos/$desativado") {
+			comAutorizacao()
+		}
 			.andExpect { status { isNoContent() } }
 
 		val mesId = criarMes()
 
-		mockMvc.get("/api/v1/meses/$mesId/lancamentos")
+		mockMvc.get("/api/v1/meses/$mesId/lancamentos") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.length()") { value(1) } }
 			.andExpect { jsonPath("$[0].descricao") { value("aluguel") } }
@@ -146,9 +157,11 @@ class MesCriacaoGastosFixosApiTest : SuportePostgres() {
 			UUID.fromString(mesId),
 		)!!
 
-		mesService.gerarLancamentosDeGastosFixos(mesIdInterno, USUARIO_SEED)
+		mesService.gerarLancamentosDeGastosFixos(mesIdInterno, usuarioIdPadrao())
 
-		mockMvc.get("/api/v1/meses/$mesId/lancamentos")
+		mockMvc.get("/api/v1/meses/$mesId/lancamentos") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.length()") { value(2) } }
 	}
@@ -165,9 +178,11 @@ class MesCriacaoGastosFixosApiTest : SuportePostgres() {
 		criarLancamentoManual(mesId)
 		criarGastoFixo("aluguel", "250.50")
 
-		mesService.gerarLancamentosDeGastosFixos(mesIdInterno, USUARIO_SEED)
+		mesService.gerarLancamentosDeGastosFixos(mesIdInterno, usuarioIdPadrao())
 
-		mockMvc.get("/api/v1/meses/$mesId/lancamentos")
+		mockMvc.get("/api/v1/meses/$mesId/lancamentos") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.length()") { value(2) } }
 			.andExpect { jsonPath("$[0].descricao") { value("lançamento manual") } }
@@ -175,9 +190,11 @@ class MesCriacaoGastosFixosApiTest : SuportePostgres() {
 			.andExpect { jsonPath("$[1].descricao") { value("aluguel") } }
 			.andExpect { jsonPath("$[1].origemGastoFixo") { value(true) } }
 
-		mesService.gerarLancamentosDeGastosFixos(mesIdInterno, USUARIO_SEED)
+		mesService.gerarLancamentosDeGastosFixos(mesIdInterno, usuarioIdPadrao())
 
-		mockMvc.get("/api/v1/meses/$mesId/lancamentos")
+		mockMvc.get("/api/v1/meses/$mesId/lancamentos") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.length()") { value(2) } }
 	}
@@ -188,6 +205,7 @@ class MesCriacaoGastosFixosApiTest : SuportePostgres() {
 		criarMes("2026-10-01")
 
 		mockMvc.post("/api/v1/meses") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = requestMes("2026-10-01")
 		}
@@ -195,8 +213,11 @@ class MesCriacaoGastosFixosApiTest : SuportePostgres() {
 			.andExpect { jsonPath("$.mensagem") { isNotEmpty() } }
 	}
 
+	private fun usuarioIdPadrao(): Long = TokenTestes.usuarioId(jdbcTemplate, TokenTestes.UID_PADRAO)
+
 	private fun criarGastoFixo(descricao: String, valorPadrao: String): String {
 		val resposta = mockMvc.post("/api/v1/gastos-fixos") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"descricao": "$descricao", "valorPadrao": "$valorPadrao"}"""
 		}
@@ -208,6 +229,7 @@ class MesCriacaoGastosFixosApiTest : SuportePostgres() {
 
 	private fun criarLancamentoManual(mesId: String) {
 		mockMvc.post("/api/v1/meses/$mesId/lancamentos") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"tipo": "DESPESA", "descricao": "lançamento manual", "valor": "10.00"}"""
 		}
@@ -216,6 +238,7 @@ class MesCriacaoGastosFixosApiTest : SuportePostgres() {
 
 	private fun criarMes(mesReferencia: String = "2026-10-01"): String {
 		val resposta = mockMvc.post("/api/v1/meses") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = requestMes(mesReferencia)
 		}

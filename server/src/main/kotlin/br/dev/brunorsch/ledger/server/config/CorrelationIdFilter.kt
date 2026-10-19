@@ -1,6 +1,5 @@
 package br.dev.brunorsch.ledger.server.config
 
-import br.dev.brunorsch.ledger.server.service.UsuarioAutenticadoService
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -13,8 +12,8 @@ import java.util.UUID
  * Propaga um identificador de correlação por requisição.
  *
  * O valor vem do header `X-Correlation-Id`; quando ausente, um UUID é gerado.
- * O identificador e o usuário autenticado (header `X-Usuario-Id`) entram no MDC
- * para que apareçam nos logs estruturados.
+ * O identificador entra no MDC para aparecer nos logs estruturados; o usuário
+ * autenticado é publicado pelo [br.dev.brunorsch.ledger.server.service.UsuarioAutenticadoService].
  */
 @Component
 class CorrelationIdFilter : OncePerRequestFilter() {
@@ -30,8 +29,6 @@ class CorrelationIdFilter : OncePerRequestFilter() {
 
 		MDC.put(CHAVE_CORRELATION_ID, correlationId)
 		response.setHeader(HEADER_CORRELATION_ID, correlationId)
-
-		request.getHeader(UsuarioAutenticadoService.HEADER_USUARIO_ID)?.let { MDC.put(CHAVE_USUARIO_ID, it) }
 
 		try {
 			filterChain.doFilter(request, response)

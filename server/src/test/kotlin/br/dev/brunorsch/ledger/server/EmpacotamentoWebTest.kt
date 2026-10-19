@@ -56,6 +56,7 @@ class EmpacotamentoWebTest : SuportePostgres() {
 			.build()
 			.get()
 			.uri("/api/v1/nao-existe")
+			.header("Authorization", TokenTestes.autorizacao())
 			.exchange()
 			.expectStatus().isNotFound()
 			.expectHeader().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)

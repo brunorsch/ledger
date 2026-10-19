@@ -1,6 +1,5 @@
 package br.dev.brunorsch.ledger.server
 
-import br.dev.brunorsch.ledger.server.service.UsuarioAutenticadoService
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -32,8 +31,6 @@ class MesSumarioApiTest : SuportePostgres() {
 	lateinit var objectMapper: JsonMapper
 
 	companion object {
-		private const val USUARIO_SEED = 1L
-
 		private val REQUEST_OUTUBRO = """
 			{
 				"mesReferencia": "2026-10-01",
@@ -55,7 +52,9 @@ class MesSumarioApiTest : SuportePostgres() {
 		inserirLancamento(id, "DESPESA", "500.00", pago = true)
 		inserirLancamento(id, "DESPESA", "306.92")
 
-		mockMvc.get("/api/v1/meses/$id/sumario")
+		mockMvc.get("/api/v1/meses/$id/sumario") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.receitas") { isString() } }
 			.andExpect { jsonPath("$.receitas") { value("2000.00") } }
@@ -74,7 +73,9 @@ class MesSumarioApiTest : SuportePostgres() {
 	fun `mes sem lancamentos retorna sumario e distribuicao zerados`() {
 		val id = criarMes()
 
-		mockMvc.get("/api/v1/meses/$id/sumario")
+		mockMvc.get("/api/v1/meses/$id/sumario") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.receitas") { value("0.00") } }
 			.andExpect { jsonPath("$.despesas") { value("0.00") } }
@@ -93,7 +94,9 @@ class MesSumarioApiTest : SuportePostgres() {
 		inserirLancamento(id, "RECEITA", "1000.00")
 		inserirLancamento(id, "DESPESA", "1500.00", pago = true)
 
-		mockMvc.get("/api/v1/meses/$id/sumario")
+		mockMvc.get("/api/v1/meses/$id/sumario") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.restante") { value("-500.00") } }
 			.andExpect { jsonPath("$.distribuicao.essenciais") { value("0.00") } }
@@ -121,7 +124,9 @@ class MesSumarioApiTest : SuportePostgres() {
 		)
 		inserirLancamento(id, "RECEITA", "1193.08")
 
-		mockMvc.get("/api/v1/meses/$id/sumario")
+		mockMvc.get("/api/v1/meses/$id/sumario") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.distribuicao.essenciais") { value("1014.12") } }
 			.andExpect { jsonPath("$.distribuicao.lazer") { value("178.96") } }
@@ -147,7 +152,9 @@ class MesSumarioApiTest : SuportePostgres() {
 		)
 		inserirLancamento(id, "RECEITA", "1193.08")
 
-		mockMvc.get("/api/v1/meses/$id/sumario")
+		mockMvc.get("/api/v1/meses/$id/sumario") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.distribuicao.essenciais") { value("894.81") } }
 			.andExpect { jsonPath("$.distribuicao.lazer") { value("0.00") } }
@@ -161,7 +168,9 @@ class MesSumarioApiTest : SuportePostgres() {
 		val id = criarMes()
 		inserirLancamento(id, "RECEITA", "1000.00")
 
-		mockMvc.get("/api/v1/meses/$id/sumario")
+		mockMvc.get("/api/v1/meses/$id/sumario") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.receitas") { value("1000.00") } }
 			.andExpect { jsonPath("$.restante") { value("1000.00") } }
@@ -175,7 +184,9 @@ class MesSumarioApiTest : SuportePostgres() {
 			UUID.fromString(id),
 		)
 
-		mockMvc.get("/api/v1/meses/$id/sumario")
+		mockMvc.get("/api/v1/meses/$id/sumario") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.receitas") { value("1500.00") } }
 			.andExpect { jsonPath("$.restante") { value("1500.00") } }
@@ -201,13 +212,17 @@ class MesSumarioApiTest : SuportePostgres() {
 		inserirLancamento(idOutubro, "RECEITA", "1193.08")
 		inserirLancamento(idNovembro, "RECEITA", "1193.08")
 
-		mockMvc.get("/api/v1/meses/$idOutubro/sumario")
+		mockMvc.get("/api/v1/meses/$idOutubro/sumario") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.distribuicao.essenciais") { value("596.54") } }
 			.andExpect { jsonPath("$.distribuicao.lazer") { value("357.92") } }
 			.andExpect { jsonPath("$.distribuicao.reservas") { value("238.62") } }
 
-		mockMvc.get("/api/v1/meses/$idNovembro/sumario")
+		mockMvc.get("/api/v1/meses/$idNovembro/sumario") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.distribuicao.essenciais") { value("477.23") } }
 			.andExpect { jsonPath("$.distribuicao.lazer") { value("238.62") } }
@@ -217,21 +232,21 @@ class MesSumarioApiTest : SuportePostgres() {
 	@Test
 	fun `sumario de mes inexistente ou de outro usuario retorna 404`() {
 		val id = criarMes()
-		jdbcTemplate.update(
-			"INSERT INTO usuarios (id, identity_provider) OVERRIDING SYSTEM VALUE VALUES (2, 'outro-usuario')",
-		)
 
-		mockMvc.get("/api/v1/meses/00000000-0000-0000-0000-000000000000/sumario")
+		mockMvc.get("/api/v1/meses/00000000-0000-0000-0000-000000000000/sumario") {
+			comAutorizacao()
+		}
 			.andExpect { status { isNotFound() } }
 
 		mockMvc.get("/api/v1/meses/$id/sumario") {
-			header(UsuarioAutenticadoService.HEADER_USUARIO_ID, "2")
+			comAutorizacao(TokenTestes.UID_OUTRO)
 		}
 			.andExpect { status { isNotFound() } }
 	}
 
 	private fun criarMes(request: String = REQUEST_OUTUBRO): String {
 		val resposta = mockMvc.post("/api/v1/meses") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = request
 		}
@@ -258,7 +273,7 @@ class MesSumarioApiTest : SuportePostgres() {
 			VALUES (?, ?, ?, ?::tipo_lancamento, 'lançamento de teste', ?, ?)
 			""".trimIndent(),
 			UUID.randomUUID(),
-			USUARIO_SEED,
+			TokenTestes.usuarioId(jdbcTemplate, TokenTestes.UID_PADRAO),
 			mesId,
 			tipo,
 			BigDecimal(valor),

@@ -1,13 +1,11 @@
 package br.dev.brunorsch.ledger.server
 
-import br.dev.brunorsch.ledger.server.service.UsuarioAutenticadoService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.http.MediaType
-import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
@@ -23,9 +21,6 @@ class MesApiTest : SuportePostgres() {
 
 	@Autowired
 	lateinit var mockMvc: MockMvc
-
-	@Autowired
-	lateinit var jdbcTemplate: JdbcTemplate
 
 	@Autowired
 	lateinit var objectMapper: JsonMapper
@@ -46,6 +41,7 @@ class MesApiTest : SuportePostgres() {
 	@Test
 	fun `post cria mes e retorna 201 com o payload completo`() {
 		mockMvc.post("/api/v1/meses") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = REQUEST_OUTUBRO
 		}
@@ -62,6 +58,7 @@ class MesApiTest : SuportePostgres() {
 	@Test
 	fun `parametros de calculo gravados sao iguais aos enviados na request`() {
 		val resposta = mockMvc.post("/api/v1/meses") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = REQUEST_OUTUBRO
 		}
@@ -71,7 +68,9 @@ class MesApiTest : SuportePostgres() {
 		val corpoCriacao = objectMapper.readTree(resposta.response.contentAsString)
 		val id = corpoCriacao["id"].asText()
 
-		val leitura = mockMvc.get("/api/v1/meses/$id")
+		val leitura = mockMvc.get("/api/v1/meses/$id") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andReturn()
 
@@ -85,6 +84,7 @@ class MesApiTest : SuportePostgres() {
 		val request = REQUEST_OUTUBRO.replace("2026-10-01", "2026-10-15")
 
 		mockMvc.post("/api/v1/meses") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = request
 		}
@@ -105,6 +105,7 @@ class MesApiTest : SuportePostgres() {
 		""".trimIndent()
 
 		mockMvc.post("/api/v1/meses") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = request
 		}
@@ -115,23 +116,24 @@ class MesApiTest : SuportePostgres() {
 	fun `get por id retorna 200 para mes do proprio usuario e 404 para mes inexistente`() {
 		val id = criarMes(REQUEST_OUTUBRO)
 
-		mockMvc.get("/api/v1/meses/$id")
+		mockMvc.get("/api/v1/meses/$id") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.id") { value(id) } }
 
-		mockMvc.get("/api/v1/meses/00000000-0000-0000-0000-000000000000")
+		mockMvc.get("/api/v1/meses/00000000-0000-0000-0000-000000000000") {
+			comAutorizacao()
+		}
 			.andExpect { status { isNotFound() } }
 	}
 
 	@Test
 	fun `usuario nao consegue ler mes de outro usuario`() {
 		val id = criarMes(REQUEST_OUTUBRO)
-		jdbcTemplate.update(
-			"INSERT INTO usuarios (id, identity_provider) OVERRIDING SYSTEM VALUE VALUES (2, 'outro-usuario')",
-		)
 
 		mockMvc.get("/api/v1/meses/$id") {
-			header(UsuarioAutenticadoService.HEADER_USUARIO_ID, "2")
+			comAutorizacao(TokenTestes.UID_OUTRO)
 		}
 			.andExpect { status { isNotFound() } }
 	}
@@ -140,11 +142,17 @@ class MesApiTest : SuportePostgres() {
 	fun `get por referencia retorna o mes correspondente ou 404`() {
 		criarMes(REQUEST_OUTUBRO)
 
-		mockMvc.get("/api/v1/meses") { param("referencia", "2026-10") }
+		mockMvc.get("/api/v1/meses") {
+			comAutorizacao()
+			param("referencia", "2026-10")
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.mesReferencia") { value("2026-10-01") } }
 
-		mockMvc.get("/api/v1/meses") { param("referencia", "2026-11") }
+		mockMvc.get("/api/v1/meses") {
+			comAutorizacao()
+			param("referencia", "2026-11")
+		}
 			.andExpect { status { isNotFound() } }
 	}
 
@@ -153,20 +161,27 @@ class MesApiTest : SuportePostgres() {
 		criarMes(REQUEST_OUTUBRO)
 		criarMes(REQUEST_OUTUBRO.replace("2026-10-01", "2026-11-01"))
 
-		mockMvc.get("/api/v1/meses/ultimo")
+		mockMvc.get("/api/v1/meses/ultimo") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.mesReferencia") { value("2026-11-01") } }
 	}
 
 	@Test
 	fun `get ultimo sem meses retorna 404`() {
-		mockMvc.get("/api/v1/meses/ultimo")
+		mockMvc.get("/api/v1/meses/ultimo") {
+			comAutorizacao()
+		}
 			.andExpect { status { isNotFound() } }
 	}
 
 	@Test
 	fun `get por referencia com formato invalido retorna 400 com mensagem clara`() {
-		mockMvc.get("/api/v1/meses") { param("referencia", "outubro") }
+		mockMvc.get("/api/v1/meses") {
+			comAutorizacao()
+			param("referencia", "outubro")
+		}
 			.andExpect { status { isBadRequest() } }
 			.andExpect { jsonPath("$.mensagem") { value("referencia deve estar no formato YYYY-MM: outubro") } }
 	}
@@ -175,7 +190,9 @@ class MesApiTest : SuportePostgres() {
 	fun `dinheiro e serializado como string na resposta`() {
 		val id = criarMes(REQUEST_OUTUBRO)
 
-		mockMvc.get("/api/v1/meses/$id")
+		mockMvc.get("/api/v1/meses/$id") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.deficit") { isString() } }
 			.andExpect { jsonPath("$.deficit") { value("0.00") } }
@@ -198,6 +215,7 @@ class MesApiTest : SuportePostgres() {
 		""".trimIndent()
 
 		mockMvc.post("/api/v1/meses") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = request
 		}
@@ -208,6 +226,7 @@ class MesApiTest : SuportePostgres() {
 
 	private fun criarMes(request: String): String {
 		val resposta = mockMvc.post("/api/v1/meses") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = request
 		}

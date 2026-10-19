@@ -1,19 +1,23 @@
 package br.dev.brunorsch.ledger.server.exception
 
 import br.dev.brunorsch.ledger.server.config.CorrelationIdFilter
+import br.dev.brunorsch.ledger.server.service.UsuarioAutenticadoService
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import org.springframework.beans.TypeMismatchException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.ErrorResponse
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.servlet.resource.NoResourceFoundException
 
 @RestControllerAdvice
-class ApiExceptionHandler {
+class ApiExceptionHandler(
+	private val usuarioAutenticadoService: UsuarioAutenticadoService,
+) {
 
 	private val log = LoggerFactory.getLogger(ApiExceptionHandler::class.java)
 
@@ -60,10 +64,20 @@ class ApiExceptionHandler {
 			throw ex
 		}
 
+		registrarUsuarioNoMdc()
 		log.error("Erro interno ao processar requisição", ex)
 		val correlationId = MDC.get(CorrelationIdFilter.CHAVE_CORRELATION_ID) ?: ""
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 			.body(ErroInternoResponse(mensagem = "Erro interno", correlationId = correlationId))
+	}
+
+	private fun registrarUsuarioNoMdc() {
+		val authentication = SecurityContextHolder.getContext().authentication ?: return
+		try {
+			usuarioAutenticadoService.resolver(authentication)
+		} catch (_: Exception) {
+			// A resolução do usuário não pode alterar o erro original.
+		}
 	}
 
 	data class ErroResponse(val mensagem: String)

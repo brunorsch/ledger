@@ -11,6 +11,12 @@ spring:
   jackson:
     deserialization:
       use_big_decimal_for_floats: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: "https://securetoken.google.com/${FIREBASE_PROJECT_ID:pregsledger}"
+          audiences: "${FIREBASE_PROJECT_ID:pregsledger}"
 
 management:
   endpoints:

@@ -1,6 +1,5 @@
 package br.dev.brunorsch.ledger.server
 
-import br.dev.brunorsch.ledger.server.service.UsuarioAutenticadoService
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -33,8 +32,6 @@ class MesAlternanciasApiTest : SuportePostgres() {
 	lateinit var objectMapper: JsonMapper
 
 	companion object {
-		private const val USUARIO_SEED = 1L
-
 		private val REQUEST_OUTUBRO = """
 			{
 				"mesReferencia": "2026-10-01",
@@ -54,6 +51,7 @@ class MesAlternanciasApiTest : SuportePostgres() {
 		val id = criarMes()
 
 		mockMvc.patch("/api/v1/meses/$id/alternancias") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"alternarInvestir": false, "alternarLazer": false}"""
 		}
@@ -61,7 +59,9 @@ class MesAlternanciasApiTest : SuportePostgres() {
 			.andExpect { jsonPath("$.alternarInvestir") { value(false) } }
 			.andExpect { jsonPath("$.alternarLazer") { value(false) } }
 
-		mockMvc.get("/api/v1/meses/$id")
+		mockMvc.get("/api/v1/meses/$id") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.alternarInvestir") { value(false) } }
 			.andExpect { jsonPath("$.alternarLazer") { value(false) } }
@@ -73,6 +73,7 @@ class MesAlternanciasApiTest : SuportePostgres() {
 		val id = criarMes()
 
 		mockMvc.patch("/api/v1/meses/$id/alternancias") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"alternarInvestir": false}"""
 		}
@@ -81,6 +82,7 @@ class MesAlternanciasApiTest : SuportePostgres() {
 			.andExpect { jsonPath("$.alternarLazer") { value(true) } }
 
 		mockMvc.patch("/api/v1/meses/$id/alternancias") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"alternarLazer": false}"""
 		}
@@ -99,12 +101,15 @@ class MesAlternanciasApiTest : SuportePostgres() {
 		inserirLancamento(id, "RECEITA", "1193.08")
 
 		mockMvc.patch("/api/v1/meses/$id/alternancias") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"alternarInvestir": false, "alternarLazer": false}"""
 		}
 			.andExpect { status { isOk() } }
 
-		mockMvc.get("/api/v1/meses/$id/sumario")
+		mockMvc.get("/api/v1/meses/$id/sumario") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.distribuicao.essenciais") { value("1193.08") } }
 			.andExpect { jsonPath("$.distribuicao.lazer") { value("0.00") } }
@@ -119,19 +124,24 @@ class MesAlternanciasApiTest : SuportePostgres() {
 		val id = criarMes()
 		inserirLancamento(id, "RECEITA", "1193.08")
 
-		mockMvc.get("/api/v1/meses/$id/sumario")
+		mockMvc.get("/api/v1/meses/$id/sumario") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.distribuicao.essenciais") { value("596.54") } }
 			.andExpect { jsonPath("$.distribuicao.lazer") { value("357.92") } }
 			.andExpect { jsonPath("$.distribuicao.reservas") { value("238.62") } }
 
 		mockMvc.patch("/api/v1/meses/$id/alternancias") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"alternarInvestir": false}"""
 		}
 			.andExpect { status { isOk() } }
 
-		mockMvc.get("/api/v1/meses/$id/sumario")
+		mockMvc.get("/api/v1/meses/$id/sumario") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.distribuicao.essenciais") { value("1014.12") } }
 			.andExpect { jsonPath("$.distribuicao.lazer") { value("178.96") } }
@@ -142,14 +152,11 @@ class MesAlternanciasApiTest : SuportePostgres() {
 	@Test
 	fun `mes de outro usuario retorna 404`() {
 		val id = criarMes()
-		jdbcTemplate.update(
-			"INSERT INTO usuarios (id, identity_provider) OVERRIDING SYSTEM VALUE VALUES (2, 'outro-usuario')",
-		)
 
 		mockMvc.patch("/api/v1/meses/$id/alternancias") {
+			comAutorizacao(TokenTestes.UID_OUTRO)
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"alternarInvestir": false}"""
-			header(UsuarioAutenticadoService.HEADER_USUARIO_ID, "2")
 		}
 			.andExpect { status { isNotFound() } }
 	}
@@ -158,6 +165,7 @@ class MesAlternanciasApiTest : SuportePostgres() {
 	@Test
 	fun `mes inexistente retorna 404`() {
 		mockMvc.patch("/api/v1/meses/00000000-0000-0000-0000-000000000000/alternancias") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"alternarInvestir": false}"""
 		}
@@ -166,6 +174,7 @@ class MesAlternanciasApiTest : SuportePostgres() {
 
 	private fun criarMes(request: String = REQUEST_OUTUBRO): String {
 		val resposta = mockMvc.post("/api/v1/meses") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = request
 		}
@@ -187,7 +196,7 @@ class MesAlternanciasApiTest : SuportePostgres() {
 			VALUES (?, ?, ?, ?::tipo_lancamento, 'lançamento de teste', ?, true)
 			""".trimIndent(),
 			UUID.randomUUID(),
-			USUARIO_SEED,
+			TokenTestes.usuarioId(jdbcTemplate, TokenTestes.UID_PADRAO),
 			mesId,
 			tipo,
 			BigDecimal(valor),

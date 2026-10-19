@@ -18,6 +18,7 @@ class PingApiTest : SuportePostgres() {
 			.build()
 			.get()
 			.uri("/api/v1/ping")
+			.header("Authorization", TokenTestes.autorizacao())
 			.exchange()
 			.expectStatus().isOk()
 			.expectBody().jsonPath("$.status").isEqualTo("ok")

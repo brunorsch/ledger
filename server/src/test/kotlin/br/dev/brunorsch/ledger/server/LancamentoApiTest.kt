@@ -1,6 +1,5 @@
 package br.dev.brunorsch.ledger.server
 
-import br.dev.brunorsch.ledger.server.service.UsuarioAutenticadoService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -63,6 +62,7 @@ class LancamentoApiTest : SuportePostgres() {
 		val mesId = criarMes()
 
 		mockMvc.post("/api/v1/meses/$mesId/lancamentos") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"tipo": "DESPESA", "descricao": "mercado", "valor": "250.50"}"""
 		}
@@ -83,6 +83,7 @@ class LancamentoApiTest : SuportePostgres() {
 		val mesId = criarMes()
 
 		val resposta = mockMvc.post("/api/v1/meses/$mesId/lancamentos") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = """
 				{"tipo": "RECEITA", "descricao": "salário", "valor": "5000.00",
@@ -112,6 +113,7 @@ class LancamentoApiTest : SuportePostgres() {
 		val mesId = criarMes()
 
 		mockMvc.post("/api/v1/meses/$mesId/lancamentos") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"tipo": "DESPESA", "descricao": "mercado", "valor": "0.00"}"""
 		}
@@ -124,6 +126,7 @@ class LancamentoApiTest : SuportePostgres() {
 		val mesId = criarMes()
 
 		mockMvc.post("/api/v1/meses/$mesId/lancamentos") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"tipo": "DESPESA", "descricao": "mercado", "valor": "-5.00"}"""
 		}
@@ -134,12 +137,11 @@ class LancamentoApiTest : SuportePostgres() {
 	@Test
 	fun `post em mes de outro usuario retorna 404`() {
 		val mesId = criarMes()
-		criarUsuario2()
 
 		mockMvc.post("/api/v1/meses/$mesId/lancamentos") {
+			comAutorizacao(TokenTestes.UID_OUTRO)
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"tipo": "DESPESA", "descricao": "mercado", "valor": "10.00"}"""
-			header(UsuarioAutenticadoService.HEADER_USUARIO_ID, "2")
 		}
 			.andExpect { status { isNotFound() } }
 	}
@@ -153,7 +155,9 @@ class LancamentoApiTest : SuportePostgres() {
 		criarLancamento(mesOutubro, "DESPESA", "100.00")
 		criarLancamento(mesNovembro, "RECEITA", "2000.00")
 
-		mockMvc.get("/api/v1/meses/$mesOutubro/lancamentos")
+		mockMvc.get("/api/v1/meses/$mesOutubro/lancamentos") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$") { isArray() } }
 			.andExpect { jsonPath("$.length()") { value(2) } }
@@ -162,7 +166,9 @@ class LancamentoApiTest : SuportePostgres() {
 			.andExpect { jsonPath("$[1].tipo") { value("DESPESA") } }
 			.andExpect { jsonPath("$[1].valor") { value("100.00") } }
 
-		mockMvc.get("/api/v1/meses/$mesNovembro/lancamentos")
+		mockMvc.get("/api/v1/meses/$mesNovembro/lancamentos") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.length()") { value(1) } }
 	}
@@ -170,10 +176,9 @@ class LancamentoApiTest : SuportePostgres() {
 	@Test
 	fun `get lancamentos de mes de outro usuario retorna 404`() {
 		val mesId = criarMes()
-		criarUsuario2()
 
 		mockMvc.get("/api/v1/meses/$mesId/lancamentos") {
-			header(UsuarioAutenticadoService.HEADER_USUARIO_ID, "2")
+			comAutorizacao(TokenTestes.UID_OUTRO)
 		}
 			.andExpect { status { isNotFound() } }
 	}
@@ -185,6 +190,7 @@ class LancamentoApiTest : SuportePostgres() {
 		val lancamentoId = criarLancamento(mesId, "DESPESA", "100.00")
 
 		mockMvc.patch("/api/v1/lancamentos/$lancamentoId") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"pago": true}"""
 		}
@@ -213,6 +219,7 @@ class LancamentoApiTest : SuportePostgres() {
 		)
 
 		mockMvc.patch("/api/v1/lancamentos/$lancamentoId") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"pago": false}"""
 		}
@@ -225,16 +232,16 @@ class LancamentoApiTest : SuportePostgres() {
 	fun `patch em lancamento de outro usuario ou inexistente retorna 404`() {
 		val mesId = criarMes()
 		val lancamentoId = criarLancamento(mesId, "DESPESA", "100.00")
-		criarUsuario2()
 
 		mockMvc.patch("/api/v1/lancamentos/$lancamentoId") {
+			comAutorizacao(TokenTestes.UID_OUTRO)
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"pago": true}"""
-			header(UsuarioAutenticadoService.HEADER_USUARIO_ID, "2")
 		}
 			.andExpect { status { isNotFound() } }
 
 		mockMvc.patch("/api/v1/lancamentos/00000000-0000-0000-0000-000000000000") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"pago": true}"""
 		}
@@ -247,10 +254,14 @@ class LancamentoApiTest : SuportePostgres() {
 		val mesId = criarMes()
 		val lancamentoId = criarLancamento(mesId, "RECEITA", "1000.00")
 
-		mockMvc.delete("/api/v1/lancamentos/$lancamentoId")
+		mockMvc.delete("/api/v1/lancamentos/$lancamentoId") {
+			comAutorizacao()
+		}
 			.andExpect { status { isNoContent() } }
 
-		mockMvc.get("/api/v1/meses/$mesId/lancamentos")
+		mockMvc.get("/api/v1/meses/$mesId/lancamentos") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.length()") { value(0) } }
 	}
@@ -259,14 +270,15 @@ class LancamentoApiTest : SuportePostgres() {
 	fun `delete de lancamento inexistente ou de outro usuario retorna 404`() {
 		val mesId = criarMes()
 		val lancamentoId = criarLancamento(mesId, "DESPESA", "100.00")
-		criarUsuario2()
 
 		mockMvc.delete("/api/v1/lancamentos/$lancamentoId") {
-			header(UsuarioAutenticadoService.HEADER_USUARIO_ID, "2")
+			comAutorizacao(TokenTestes.UID_OUTRO)
 		}
 			.andExpect { status { isNotFound() } }
 
-		mockMvc.delete("/api/v1/lancamentos/00000000-0000-0000-0000-000000000000")
+		mockMvc.delete("/api/v1/lancamentos/00000000-0000-0000-0000-000000000000") {
+			comAutorizacao()
+		}
 			.andExpect { status { isNotFound() } }
 	}
 
@@ -276,24 +288,33 @@ class LancamentoApiTest : SuportePostgres() {
 		val mesId = criarMes()
 		val lancamentoId = criarLancamento(mesId, "RECEITA", "1000.00")
 
-		mockMvc.get("/api/v1/meses/$mesId/sumario")
+		mockMvc.get("/api/v1/meses/$mesId/sumario") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.receitas") { value("1000.00") } }
 
 		mockMvc.patch("/api/v1/lancamentos/$lancamentoId") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"valor": "1500.00"}"""
 		}
 			.andExpect { status { isOk() } }
 
-		mockMvc.get("/api/v1/meses/$mesId/sumario")
+		mockMvc.get("/api/v1/meses/$mesId/sumario") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.receitas") { value("1500.00") } }
 
-		mockMvc.delete("/api/v1/lancamentos/$lancamentoId")
+		mockMvc.delete("/api/v1/lancamentos/$lancamentoId") {
+			comAutorizacao()
+		}
 			.andExpect { status { isNoContent() } }
 
-		mockMvc.get("/api/v1/meses/$mesId/sumario")
+		mockMvc.get("/api/v1/meses/$mesId/sumario") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.receitas") { value("0.00") } }
 	}
@@ -304,6 +325,7 @@ class LancamentoApiTest : SuportePostgres() {
 		val mesId = criarMes()
 
 		mockMvc.post("/api/v1/meses/$mesId/lancamentos") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"tipo": "RECEITA", "descricao": "freelance", "valor": "25.50"}"""
 		}
@@ -314,6 +336,7 @@ class LancamentoApiTest : SuportePostgres() {
 
 	private fun criarMes(request: String = REQUEST_OUTUBRO): String {
 		val resposta = mockMvc.post("/api/v1/meses") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = request
 		}
@@ -321,12 +344,6 @@ class LancamentoApiTest : SuportePostgres() {
 			.andReturn()
 
 		return objectMapper.readTree(resposta.response.contentAsString)["id"].stringValue()
-	}
-
-	private fun criarUsuario2() {
-		jdbcTemplate.update(
-			"INSERT INTO usuarios (id, identity_provider) OVERRIDING SYSTEM VALUE VALUES (2, 'outro-usuario')",
-		)
 	}
 
 	private fun criarLancamento(
@@ -345,6 +362,7 @@ class LancamentoApiTest : SuportePostgres() {
 		if (pagoEm != null) campos += """"pagoEm": "$pagoEm""""
 
 		val resposta = mockMvc.post("/api/v1/meses/$mesId/lancamentos") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = "{ ${campos.joinToString(", ")} }"
 		}

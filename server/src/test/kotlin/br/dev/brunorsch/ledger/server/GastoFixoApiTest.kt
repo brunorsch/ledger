@@ -1,6 +1,5 @@
 package br.dev.brunorsch.ledger.server
 
-import br.dev.brunorsch.ledger.server.service.UsuarioAutenticadoService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -50,6 +49,7 @@ class GastoFixoApiTest : SuportePostgres() {
 	@Test
 	fun `post cria gasto fixo com ativo true por padrao e retorna 201`() {
 		mockMvc.post("/api/v1/gastos-fixos") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"descricao": "aluguel", "valorPadrao": "250.50"}"""
 		}
@@ -64,6 +64,7 @@ class GastoFixoApiTest : SuportePostgres() {
 	@Test
 	fun `post com valor zero retorna 201`() {
 		mockMvc.post("/api/v1/gastos-fixos") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"descricao": "sem valor", "valorPadrao": "0.00"}"""
 		}
@@ -74,6 +75,7 @@ class GastoFixoApiTest : SuportePostgres() {
 	@Test
 	fun `post com valor negativo retorna 400`() {
 		mockMvc.post("/api/v1/gastos-fixos") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"descricao": "aluguel", "valorPadrao": "-5.00"}"""
 		}
@@ -86,15 +88,18 @@ class GastoFixoApiTest : SuportePostgres() {
 		val ativo1 = criarGastoFixo("aluguel", "250.50")
 		criarGastoFixo("internet", "120.00")
 		val desativado = criarGastoFixo("academia", "90.00")
-		mockMvc.delete("/api/v1/gastos-fixos/$desativado")
+		mockMvc.delete("/api/v1/gastos-fixos/$desativado") {
+			comAutorizacao()
+		}
 			.andExpect { status { isNoContent() } }
 
-		criarUsuario2()
-		criarGastoFixo("aluguel do outro", "999.00", usuarioIdHeader = "2")
+		criarGastoFixo("aluguel do outro", "999.00", uid = TokenTestes.UID_OUTRO)
 
 		assertThat(ativo1).isNotEmpty()
 
-		mockMvc.get("/api/v1/gastos-fixos")
+		mockMvc.get("/api/v1/gastos-fixos") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$") { isArray() } }
 			.andExpect { jsonPath("$.length()") { value(2) } }
@@ -108,6 +113,7 @@ class GastoFixoApiTest : SuportePostgres() {
 		val gastoFixoId = criarGastoFixo("aluguel", "250.50")
 
 		mockMvc.patch("/api/v1/gastos-fixos/$gastoFixoId") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"valorPadrao": "-5.00"}"""
 		}
@@ -119,6 +125,7 @@ class GastoFixoApiTest : SuportePostgres() {
 		val gastoFixoId = criarGastoFixo("aluguel", "250.50")
 
 		mockMvc.patch("/api/v1/gastos-fixos/$gastoFixoId") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"descricao": "aluguel novo"}"""
 		}
@@ -131,16 +138,16 @@ class GastoFixoApiTest : SuportePostgres() {
 	@Test
 	fun `patch em gasto fixo inexistente ou de outro usuario retorna 404`() {
 		val gastoFixoId = criarGastoFixo("aluguel", "250.50")
-		criarUsuario2()
 
 		mockMvc.patch("/api/v1/gastos-fixos/$gastoFixoId") {
+			comAutorizacao(TokenTestes.UID_OUTRO)
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"descricao": "tentativa"}"""
-			header(UsuarioAutenticadoService.HEADER_USUARIO_ID, "2")
 		}
 			.andExpect { status { isNotFound() } }
 
 		mockMvc.patch("/api/v1/gastos-fixos/00000000-0000-0000-0000-000000000000") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"descricao": "tentativa"}"""
 		}
@@ -152,10 +159,14 @@ class GastoFixoApiTest : SuportePostgres() {
 	fun `delete desativa gasto fixo e retorna 204`() {
 		val gastoFixoId = criarGastoFixo("aluguel", "250.50")
 
-		mockMvc.delete("/api/v1/gastos-fixos/$gastoFixoId")
+		mockMvc.delete("/api/v1/gastos-fixos/$gastoFixoId") {
+			comAutorizacao()
+		}
 			.andExpect { status { isNoContent() } }
 
-		mockMvc.get("/api/v1/gastos-fixos")
+		mockMvc.get("/api/v1/gastos-fixos") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.length()") { value(0) } }
 
@@ -170,14 +181,15 @@ class GastoFixoApiTest : SuportePostgres() {
 	@Test
 	fun `delete de gasto fixo inexistente ou de outro usuario retorna 404`() {
 		val gastoFixoId = criarGastoFixo("aluguel", "250.50")
-		criarUsuario2()
 
 		mockMvc.delete("/api/v1/gastos-fixos/$gastoFixoId") {
-			header(UsuarioAutenticadoService.HEADER_USUARIO_ID, "2")
+			comAutorizacao(TokenTestes.UID_OUTRO)
 		}
 			.andExpect { status { isNotFound() } }
 
-		mockMvc.delete("/api/v1/gastos-fixos/00000000-0000-0000-0000-000000000000")
+		mockMvc.delete("/api/v1/gastos-fixos/00000000-0000-0000-0000-000000000000") {
+			comAutorizacao()
+		}
 			.andExpect { status { isNotFound() } }
 	}
 
@@ -190,15 +202,20 @@ class GastoFixoApiTest : SuportePostgres() {
 		val gastoFixoId = criarGastoFixo("mercado", "250.50")
 
 		mockMvc.patch("/api/v1/gastos-fixos/$gastoFixoId") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"descricao": "mercado novo", "valorPadrao": "999.00"}"""
 		}
 			.andExpect { status { isOk() } }
 
-		mockMvc.delete("/api/v1/gastos-fixos/$gastoFixoId")
+		mockMvc.delete("/api/v1/gastos-fixos/$gastoFixoId") {
+			comAutorizacao()
+		}
 			.andExpect { status { isNoContent() } }
 
-		mockMvc.get("/api/v1/meses/$mesId/lancamentos")
+		mockMvc.get("/api/v1/meses/$mesId/lancamentos") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$.length()") { value(1) } }
 			.andExpect { jsonPath("$[0].descricao") { value("mercado") } }
@@ -209,6 +226,7 @@ class GastoFixoApiTest : SuportePostgres() {
 	@Test
 	fun `dinheiro e serializado como string na request e na resposta`() {
 		val resposta = mockMvc.post("/api/v1/gastos-fixos") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"descricao": "aluguel", "valorPadrao": "25.50"}"""
 		}
@@ -219,17 +237,23 @@ class GastoFixoApiTest : SuportePostgres() {
 
 		assertThat(resposta.response.contentAsString).isNotBlank()
 
-		mockMvc.get("/api/v1/gastos-fixos")
+		mockMvc.get("/api/v1/gastos-fixos") {
+			comAutorizacao()
+		}
 			.andExpect { status { isOk() } }
 			.andExpect { jsonPath("$[0].valorPadrao") { isString() } }
 			.andExpect { jsonPath("$[0].valorPadrao") { value("25.50") } }
 	}
 
-	private fun criarGastoFixo(descricao: String, valorPadrao: String, usuarioIdHeader: String? = null): String {
+	private fun criarGastoFixo(
+		descricao: String,
+		valorPadrao: String,
+		uid: String = TokenTestes.UID_PADRAO,
+	): String {
 		val resposta = mockMvc.post("/api/v1/gastos-fixos") {
+			comAutorizacao(uid)
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"descricao": "$descricao", "valorPadrao": "$valorPadrao"}"""
-			if (usuarioIdHeader != null) header(UsuarioAutenticadoService.HEADER_USUARIO_ID, usuarioIdHeader)
 		}
 			.andExpect { status { isCreated() } }
 			.andReturn()
@@ -239,6 +263,7 @@ class GastoFixoApiTest : SuportePostgres() {
 
 	private fun criarMes(): String {
 		val resposta = mockMvc.post("/api/v1/meses") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = REQUEST_OUTUBRO
 		}
@@ -250,6 +275,7 @@ class GastoFixoApiTest : SuportePostgres() {
 
 	private fun criarLancamento(mesId: String, descricao: String, valor: String): String {
 		val resposta = mockMvc.post("/api/v1/meses/$mesId/lancamentos") {
+			comAutorizacao()
 			contentType = MediaType.APPLICATION_JSON
 			content = """{"tipo": "DESPESA", "descricao": "$descricao", "valor": "$valor"}"""
 		}
@@ -257,11 +283,5 @@ class GastoFixoApiTest : SuportePostgres() {
 			.andReturn()
 
 		return objectMapper.readTree(resposta.response.contentAsString)["id"].stringValue()
-	}
-
-	private fun criarUsuario2() {
-		jdbcTemplate.update(
-			"INSERT INTO usuarios (id, identity_provider) OVERRIDING SYSTEM VALUE VALUES (2, 'outro-usuario')",
-		)
 	}
 }
