@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@brunorsch'
 created_date: '2026-10-11 17:39'
-updated_date: '2026-10-19 00:35'
+updated_date: '2026-10-20 03:24'
 labels:
   - auth
   - backend
@@ -71,7 +71,7 @@ Fora do escopo:
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Projeto Firebase criado com os provedores Google, Facebook (app na Meta com App ID/secret e redirect URI do Firebase) e e-mail/senha habilitados
+- [x] #1 Projeto Firebase criado com os provedores Google, Facebook (app na Meta com App ID/secret e redirect URI do Firebase) e e-mail/senha habilitados
 - [x] #2 Spring Security configurado como resource server JWT, validando assinatura, issuer e audience do ID token do Firebase, com project id configurável por env var
 - [x] #3 Usuário novo é criado na tabela `usuarios` no primeiro request autenticado, gravando o uid em `sujeito_provedor` e o `firebase.sign_in_provider` em `identity_provider`
 - [x] #4 Token de um uid já conhecido reaproveita o `usuario_id` existente, independentemente do provedor usado
@@ -98,6 +98,8 @@ Fora do escopo:
 Validação: ./gradlew :server:test (21 suítes, 0 falhas) e :server:bootJar BUILD SUCCESSFUL. Starter usado: spring-boot-starter-security-oauth2-resource-server (o antigo está deprecated no 4.1). AC#6 coberto por SegurancaApiTest (sem token/expirado/audience errada/assinatura errada -> 401); AC#3/#4 por testes de upsert e preservação do provedor; AC#7 por isolamento entre uids; AC#8 health público. Testes migrados para tokens HMAC locais (decoder de teste com JwtIssuerValidator + JwtAudienceValidator). Perfil local mantém fallback X-Usuario-Id (AutenticacaoLocalApiTest). Claim firebase.sign_in_provider lido do objeto aninhado firebase.sign_in_provider com fallback plano (compatível com token real do Firebase).
 
 AC#9 (logout com Admin SDK) movido para TASK-21 por decisão do usuário; AC#1 aguarda confirmação do usuário sobre provedores habilitados no projeto Firebase existente.
+
+AC#1 confirmado pelo usuário em 20/10: projeto Firebase com Google, Facebook e e-mail/senha habilitados e funcionais.
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary
