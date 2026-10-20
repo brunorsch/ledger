@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@brunorsch'
 created_date: '2026-10-19 01:33'
-updated_date: '2026-10-20 03:19'
+updated_date: '2026-10-20 03:22'
 labels:
   - frontend
   - auth
@@ -62,6 +62,8 @@ O backend já valida ID tokens do Firebase (TASK-20), mas o front ainda não tem
 Fixer: SDK firebase + zustand (não estava instalado), config VITE_FIREBASE_*, serviço de auth, store, Bearer + 401 -> sair+login, guard RequerAutenticacao, LoginScreen funcional e botão Sair. Designer: redesign da LoginScreen (marca, ícones SVG inline Google/Facebook, separador, banner de erro, loading por botão, aviso quando firebaseConfigurado=false), PerfilSidebar com identidade e Sair, Sair também no header de Gastos fixos, TelaCarregando compartilhada. pnpm lint e pnpm build verdes. Pendente: usuário preencher VITE_FIREBASE_* reais (a partir de .env.example) para testar o fluxo real; validação visual final do usuário (AC#1).
 
 Ajustes do usuário após revisão visual (AC#1 aprovado por ele): retry:false nas queries de mes/sumario/lancamentos (evita o delay de ~1s do retry no loading), .env no .gitignore, e remoção do botão Sair do header do Balanço (permanece no header de Gastos fixos e na sidebar desktop; mobile no Balanço fica sem logout — homologando). pnpm lint e pnpm build verdes.
+
+Pendência de UX anotada para depois (decisão do usuário): repensar o logout no mobile — o botão Sair no header não agradou; buscar alternativa (ex.: tela de perfil, menu, gesto) quando formos mexer no mobile.
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary
