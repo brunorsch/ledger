@@ -1,6 +1,8 @@
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import type { ReactNode } from 'react'
+import { Botao } from '@/components'
 import { mesAtual } from '@/format/mes'
+import { useAutenticacao } from '@/auth/useAutenticacao'
 
 const LINK_BALANCO = `/meses/${mesAtual()}`
 const LINK_GASTOS_FIXOS = '/gastos-fixos'
@@ -56,6 +58,56 @@ function Marca() {
   )
 }
 
+function PerfilSidebar() {
+  const navigate = useNavigate()
+  const usuario = useAutenticacao((estado) => estado.usuario)
+  const sair = useAutenticacao((estado) => estado.sair)
+
+  async function aoSair() {
+    await sair()
+    navigate('/login', { replace: true })
+  }
+
+  return (
+    <div className="mt-auto border-t border-line pt-4">
+      <div className="flex items-center gap-3 px-2">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft font-display text-sm font-semibold text-accent">
+          {usuario?.nome?.charAt(0) ?? usuario?.email?.charAt(0) ?? '?'}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-ink">
+            {usuario?.nome ?? 'Usuário'}
+          </p>
+          {usuario?.email && (
+            <p className="truncate text-xs text-muted">{usuario.email}</p>
+          )}
+        </div>
+      </div>
+      <Botao
+        variante="fantasma"
+        tamanho="pequeno"
+        className="mt-3 w-full justify-start"
+        onClick={() => void aoSair()}
+      >
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+          />
+        </svg>
+        Sair
+      </Botao>
+    </div>
+  )
+}
+
 function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 hidden h-screen w-60 flex-col border-r border-line bg-paper px-4 py-6 md:flex">
@@ -65,6 +117,7 @@ function Sidebar() {
           <LinkNavegacao key={item.destino} item={item} />
         ))}
       </nav>
+      <PerfilSidebar />
     </aside>
   )
 }

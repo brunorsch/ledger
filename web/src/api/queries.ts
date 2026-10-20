@@ -36,6 +36,7 @@ export function useMes(referencia: string) {
   return useQuery({
     queryKey: chaves.mes(referencia),
     queryFn: () => obterMesPorReferencia(referencia),
+    retry: false,
   })
 }
 
@@ -63,6 +64,7 @@ export function useSumario(mesId: string) {
     queryKey: chaves.sumario(mesId),
     queryFn: () => obterSumario(mesId),
     enabled: Boolean(mesId),
+    retry: false,
   })
 }
 
@@ -71,6 +73,7 @@ export function useLancamentos(mesId: string) {
     queryKey: chaves.lancamentos(mesId),
     queryFn: () => listarLancamentos(mesId),
     enabled: Boolean(mesId),
+    retry: false,
   })
 }
 

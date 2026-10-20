@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Botao, Box, Modal } from '@/components'
 import { useGastosFixos } from '@/api/queries'
+import { useAutenticacao } from '@/auth/useAutenticacao'
 import { GastoFixoItem } from './components/GastoFixoItem'
 import { FormularioGastoFixo } from './components/FormularioGastoFixo'
 import { ConfirmacaoRemocaoGastoFixo } from './components/ConfirmacaoRemocaoGastoFixo'
@@ -9,12 +11,19 @@ import { TelaErro } from './components/TelaErro'
 import type { ModalAtivoGastoFixo } from './components/types'
 
 export default function GastosFixosScreen() {
+  const navigate = useNavigate()
+  const sair = useAutenticacao((estado) => estado.sair)
   const { data: gastosFixos, isLoading, error, refetch } = useGastosFixos()
   const [modalAtivo, setModalAtivo] = useState<ModalAtivoGastoFixo>(null)
 
   useEffect(() => {
     document.title = 'Ledger · Gastos fixos'
   }, [])
+
+  async function aoSair() {
+    await sair()
+    navigate('/login', { replace: true })
+  }
 
   function fecharModal() {
     setModalAtivo(null)
@@ -39,9 +48,15 @@ export default function GastosFixosScreen() {
                 Despesas recorrentes que aparecem automaticamente em cada mês.
               </p>
             </div>
-            <Botao variante="primaria" onClick={abrirCriar}>
-              Adicionar gasto fixo
-            </Botao>
+            <div className="flex flex-wrap items-center gap-2 md:gap-3">
+              <Botao variante="primaria" onClick={abrirCriar}>
+                Adicionar gasto fixo
+              </Botao>
+
+              <Botao variante="fantasma" tamanho="pequeno" onClick={() => void aoSair()}>
+                Sair
+              </Botao>
+            </div>
           </div>
         </div>
       </header>

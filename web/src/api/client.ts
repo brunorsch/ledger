@@ -1,4 +1,6 @@
 import { ErroApi } from '@/api/types'
+import { autenticacao } from '@/firebase/config'
+import { obterIdToken, sair } from '@/auth/servicoAutenticacao'
 import type {
   AlterarAlternanciasCorpo,
   AlterarGastoFixoCorpo,
@@ -14,6 +16,22 @@ import type {
 } from '@/api/types'
 
 const API_BASE = '/api/v1'
+
+let aoReceber401: (() => void) | null = null
+
+export function definirAoReceber401(callback: (() => void) | null): void {
+  aoReceber401 = callback
+}
+
+async function headersAutorizacao(): Promise<Record<string, string>> {
+  if (!autenticacao.currentUser) return {}
+  try {
+    const token = await obterIdToken()
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  } catch {
+    return {}
+  }
+}
 
 async function extrairMensagemErro(resposta: Response): Promise<string> {
   const status = resposta.status
@@ -38,9 +56,15 @@ async function requisicao<T>(url: string, opcoes?: RequestInit): Promise<T> {
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
+      ...(await headersAutorizacao()),
       ...opcoes?.headers,
     },
   })
+
+  if (resposta.status === 401) {
+    await sair().catch(() => undefined)
+    aoReceber401?.()
+  }
 
   if (!resposta.ok) {
     const mensagem = await extrairMensagemErro(resposta)
