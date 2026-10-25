@@ -119,7 +119,6 @@ jib {
 		ports = listOf("$porta")
 		jvmFlags = listOf("-XX:MaxRAMPercentage=75.0")
 		labels.putAll(rotulosImagem)
-		environment = mapOf("SPRING_PROFILES_ACTIVE" to "docker")
 	}
 	outputPaths {
 		tar = "build/jib-dev.tar"

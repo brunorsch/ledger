@@ -1,15 +1,43 @@
 services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: ledger
+      POSTGRES_USER: ledger
+      POSTGRES_PASSWORD: ledger
+    volumes:
+      - ledger-db-docker:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ledger -d ledger"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   app:
     image: ledger-server:dev
     depends_on:
-      db:
+      postgres:
         condition: service_healthy
     environment:
-      SPRING_PROFILES_ACTIVE: docker
+      DB_URL: jdbc:postgresql://postgres:5432/ledger
+      DB_USER: ledger
+      DB_PASSWORD: ledger
     ports:
       - "9100:9100"
+    networks:
+      - default
+      - proxy
     healthcheck:
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/9100"]
       interval: 10s
       timeout: 3s
       retries: 5
+
+networks:
+  default:
+  proxy:
+    external: true
+    name: proxy
+
+volumes:
+  ledger-db-docker:

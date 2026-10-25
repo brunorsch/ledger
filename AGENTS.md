@@ -27,7 +27,7 @@ Gradle multiprojeto (módulos `web` e `server`). O artefato final é um único J
 - Imagem Docker de dev: `./gradlew :server:jibDev` (gera `ledger-server:dev` e carrega no daemon local)
 - Imagem Docker de prod: `./gradlew :server:jibProd -PjibRegistro=ghcr.io/brunorsch` (publica no registry)
 - Tar das imagens (sem Docker local): `./gradlew :server:jibDevTar` e `./gradlew :server:jibProdTar`
-- Stack completa em Docker (dev): `docker compose -f compose.yml -f compose.docker.yml up -d` (app em http://localhost:9100)
+- Stack em Docker (dev): `docker compose -f compose.docker.yml up -d` (app + postgres próprios, app em http://localhost:9100)
 - Stack de produção: `docker compose -f compose.prod.yml up -d`, com `DB_URL`, `DB_USER` e `DB_PASSWORD` no ambiente
 
 ## Imagens Docker
@@ -38,9 +38,17 @@ A imagem é gerada pelo Jib a partir do módulo `server`, já com o frontend emb
 - Dev: base `eclipse-temurin:25-jre-noble`, tem shell e roda como root, para depurar.
 - Prod: base `gcr.io/distroless/java25-debian13:nonroot`, sem shell, roda como usuário não-root.
 - A imagem de dev sai na arquitetura da máquina; a de prod sai em `linux/amd64`.
-- A imagem de dev sobe com `SPRING_PROFILES_ACTIVE=docker`, que aponta para o serviço `db` do compose.
-- A imagem de prod não fixa perfil: o banco vem sempre de `DB_URL`, `DB_USER` e `DB_PASSWORD`.
+- Nenhuma das imagens fixa perfil nem credencial: o banco vem sempre de `DB_URL`,
+  `DB_USER` e `DB_PASSWORD` do ambiente.
 - O `local` profile não funciona dentro do container: ele aponta para `localhost:65432`.
+
+O `compose.docker.yml` é autossuficiente (app + postgres) e usa a rede externa `proxy`,
+criada na máquina para o nginx alcançar a aplicação por `http://app:9100`:
+
+```bash
+docker network create proxy   # só se ainda não existir
+docker compose -f compose.docker.yml up -d
+```
 
 ## Regras de código
 
