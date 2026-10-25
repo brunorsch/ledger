@@ -1,0 +1,15 @@
+services:
+  app:
+    image: ledger-server:dev
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "9100:9100"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/9100"]
+      interval: 10s
+      timeout: 3s
+      retries: 5

@@ -1,0 +1,10 @@
+services:
+  app:
+    image: ghcr.io/brunorsch/ledger-server:prod
+    environment:
+      DB_URL: ${DB_URL}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "9100:9100"
+    restart: always

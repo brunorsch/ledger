@@ -19,11 +19,28 @@ Gradle multiprojeto (módulos `web` e `server`). O artefato final é um único J
 ## Comandos
 
 - Banco local: `docker compose up -d` (para zerar os dados: `docker compose down -v`)
-- Backend: `SPRING_PROFILES_ACTIVE=local ./gradlew :backend:bootRun`
-- Testes do backend: `./gradlew :backend:test`
+- Backend: `SPRING_PROFILES_ACTIVE=local ./gradlew :server:bootRun`
+- Testes do backend: `./gradlew :server:test`
 - Front em desenvolvimento: `cd web && pnpm dev` (proxy de `/api` para o backend)
 - Build do front: `./gradlew :web:pnpmBuild`
-- JAR final: `./gradlew :backend:bootJar`
+- JAR final: `./gradlew :server:bootJar`
+- Imagem Docker de dev: `./gradlew :server:jibDev` (gera `ledger-server:dev` e carrega no daemon local)
+- Imagem Docker de prod: `./gradlew :server:jibProd -PjibRegistro=ghcr.io/brunorsch` (publica no registry)
+- Tar das imagens (sem Docker local): `./gradlew :server:jibDevTar` e `./gradlew :server:jibProdTar`
+- Stack completa em Docker (dev): `docker compose -f compose.yml -f compose.docker.yml up -d` (app em http://localhost:9100)
+- Stack de produção: `docker compose -f compose.prod.yml up -d`, com `DB_URL`, `DB_USER` e `DB_PASSWORD` no ambiente
+
+## Imagens Docker
+
+A imagem é gerada pelo Jib a partir do módulo `server`, já com o frontend embutido
+(`/app/resources/static`) e a API em `/app`.
+
+- Dev: base `eclipse-temurin:25-jre-noble`, tem shell e roda como root, para depurar.
+- Prod: base `gcr.io/distroless/java25-debian13:nonroot`, sem shell, roda como usuário não-root.
+- A imagem de dev sai na arquitetura da máquina; a de prod sai em `linux/amd64`.
+- A imagem de dev sobe com `SPRING_PROFILES_ACTIVE=docker`, que aponta para o serviço `db` do compose.
+- A imagem de prod não fixa perfil: o banco vem sempre de `DB_URL`, `DB_USER` e `DB_PASSWORD`.
+- O `local` profile não funciona dentro do container: ele aponta para `localhost:65432`.
 
 ## Regras de código
 
