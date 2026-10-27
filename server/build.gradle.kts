@@ -1,8 +1,16 @@
+import com.google.cloud.tools.jib.gradle.BuildImageTask
+import com.google.cloud.tools.jib.gradle.BuildTarTask
+import com.google.cloud.tools.jib.gradle.JibExtension
+import com.google.cloud.tools.jib.gradle.JibTask
+import org.gradle.api.tasks.SourceSet
+import org.gradle.api.tasks.SourceSetContainer
+
 plugins {
 	kotlin("jvm") version "2.3.21"
 	kotlin("plugin.spring") version "2.3.21"
 	id("org.springframework.boot") version "4.1.1"
 	id("io.spring.dependency-management") version "1.1.7"
+	id("com.google.cloud.tools.jib") version "3.5.4"
 	jacoco
 }
 
@@ -73,9 +81,103 @@ tasks.jar {
 	enabled = false
 }
 
-tasks.bootJar {
-    dependsOn(":web:pnpmBuild")
-    from(project(":web").layout.projectDirectory.dir("dist")) {
-        into("BOOT-INF/classes/static")
-    }
+// O frontend vai para os resources do backend: assim o bootJar (BOOT-INF/classes/static)
+// e a imagem do Jib (/app/resources/static) saem com o mesmo conteúdo.
+tasks.processResources {
+	dependsOn(":web:pnpmBuild")
+	from(project(":web").layout.projectDirectory.dir("dist")) {
+		into("static")
+	}
+}
+
+val porta = 9100
+val classePrincipal = "br.dev.brunorsch.ledger.server.LedgerApplicationKt"
+val registroProducao = providers.gradleProperty("jibRegistro").getOrElse("ghcr.io/brunorsch")
+val arquiteturaLocal = when (System.getProperty("os.arch")) {
+	"aarch64", "arm64" -> "arm64"
+	else -> "amd64"
+}
+val rotulosImagem = mapOf(
+	"org.opencontainers.image.title" to "ledger",
+	"org.opencontainers.image.description" to "Controle financeiro pessoal do Ledger",
+	"org.opencontainers.image.source" to "https://github.com/brunorsch/ledger",
+	"org.opencontainers.image.version" to project.version.toString(),
+)
+
+jib {
+	from {
+		image = "eclipse-temurin:25-jre-noble"
+		platforms {
+			platform {
+				os = "linux"
+				architecture = arquiteturaLocal
+			}
+		}
+	}
+	to {
+		image = "ledger-server:dev"
+	}
+	container {
+		mainClass = classePrincipal
+		ports = listOf("$porta")
+		jvmFlags = listOf("-XX:MaxRAMPercentage=75.0")
+		labels.putAll(rotulosImagem)
+	}
+	outputPaths {
+		tar = "build/jib-dev.tar"
+	}
+}
+
+val jibProducao = extensions.create<JibExtension>("jibProducao", project).apply {
+	from.image = "gcr.io/distroless/java25-debian13:nonroot"
+	to.image = "$registroProducao/ledger-server:prod"
+	to.tags = setOf("latest")
+	container.mainClass = classePrincipal
+	container.ports = listOf("$porta")
+	container.user = "65532:65532"
+	container.jvmFlags = listOf(
+		"-XX:MaxRAMPercentage=75.0",
+		"-XX:+ExitOnOutOfMemoryError",
+		"-XX:ErrorFile=/tmp/hs_err_pid%p.log",
+		"-XX:+HeapDumpOnOutOfMemoryError",
+		"-XX:HeapDumpPath=/tmp",
+	)
+	container.labels.putAll(rotulosImagem)
+	outputPaths.tar = "build/jib-prod.tar"
+}
+
+val classePrincipalRuntime = the<SourceSetContainer>()[SourceSet.MAIN_SOURCE_SET_NAME].runtimeClasspath
+val configuracaoRuntime = configurations.named("runtimeClasspath")
+
+tasks.register<BuildImageTask>("jibProd") {
+	group = "jib"
+	description = "Publica a imagem de produção no registry."
+	setJibExtension(jibProducao)
+	dependsOn(configuracaoRuntime)
+	dependsOn(classePrincipalRuntime)
+}
+
+tasks.register<BuildTarTask>("jibProdTar") {
+	group = "jib"
+	description = "Gera o tar da imagem de produção, sem precisar de Docker."
+	setJibExtension(jibProducao)
+	dependsOn(configuracaoRuntime)
+	dependsOn(classePrincipalRuntime)
+}
+
+tasks.register("jibDev") {
+	group = "jib"
+	description = "Gera a imagem de dev e carrega no daemon Docker local."
+	dependsOn(tasks.named("jibDockerBuild"))
+}
+
+tasks.register("jibDevTar") {
+	group = "jib"
+	description = "Gera o tar da imagem de dev, sem precisar de Docker."
+	dependsOn(tasks.named("jibBuildTar"))
+}
+
+// O Jib 3.5.4 ainda não suporta configuration cache (https://github.com/GoogleContainerTools/jib/issues/3132).
+tasks.withType<JibTask>().configureEach {
+	notCompatibleWithConfigurationCache("O plugin Jib ainda não suporta configuration cache.")
 }
