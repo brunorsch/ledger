@@ -1,0 +1,5 @@
+# Decisão explícita de build scripts (pnpm 12): estes pacotes não precisam
+# rodar scripts de instalação — vêm com dist pré-compilado.
+allowBuilds:
+  '@firebase/util': false
+  protobufjs: false

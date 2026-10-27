@@ -81,8 +81,6 @@ tasks.jar {
 	enabled = false
 }
 
-// O frontend vai para os resources do backend: assim o bootJar (BOOT-INF/classes/static)
-// e a imagem do Jib (/app/resources/static) saem com o mesmo conteúdo.
 tasks.processResources {
 	dependsOn(":web:pnpmBuild")
 	from(project(":web").layout.projectDirectory.dir("dist")) {
@@ -91,15 +89,19 @@ tasks.processResources {
 }
 
 val porta = 9100
+
 val classePrincipal = "br.dev.brunorsch.ledger.server.LedgerApplicationKt"
+
 val registroProducao = providers.gradleProperty("jibRegistro").getOrElse("ghcr.io/brunorsch")
+
 val arquiteturaLocal = when (System.getProperty("os.arch")) {
 	"aarch64", "arm64" -> "arm64"
 	else -> "amd64"
 }
+
 val rotulosImagem = mapOf(
 	"org.opencontainers.image.title" to "ledger",
-	"org.opencontainers.image.description" to "Controle financeiro pessoal do Ledger",
+	"org.opencontainers.image.description" to "Ledger - App de controle financeiro pessoal",
 	"org.opencontainers.image.source" to "https://github.com/brunorsch/ledger",
 	"org.opencontainers.image.version" to project.version.toString(),
 )
@@ -163,6 +165,14 @@ tasks.register<BuildTarTask>("jibProdTar") {
 	setJibExtension(jibProducao)
 	dependsOn(configuracaoRuntime)
 	dependsOn(classePrincipalRuntime)
+}
+
+val tarefasImagemDev = setOf("jibDev", "jibDevTar", "jibDockerBuild", "jibBuildTar")
+
+gradle.taskGraph.whenReady {
+	if (allTasks.any { it.name in tarefasImagemDev } && project.findProperty("viteModo") != "development") {
+		throw GradleException("A imagem de dev embute a config de dev do front: rode com -PviteModo=development")
+	}
 }
 
 tasks.register("jibDev") {

@@ -1,10 +1,22 @@
 services:
   app:
-    image: ghcr.io/brunorsch/ledger-server:prod
-    environment:
-      DB_URL: ${DB_URL}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+    image: ghcr.io/brunorsch/ledger-server:${TAG:-prod}
+    restart: unless-stopped
+    env_file: .env
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
     ports:
-      - "9100:9100"
-    restart: always
+      - "127.0.0.1:8101:9100"
+    deploy:
+      resources:
+        limits:
+          memory: 768m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

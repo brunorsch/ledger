@@ -24,11 +24,11 @@ Gradle multiprojeto (módulos `web` e `server`). O artefato final é um único J
 - Front em desenvolvimento: `cd web && pnpm dev` (proxy de `/api` para o backend)
 - Build do front: `./gradlew :web:pnpmBuild`
 - JAR final: `./gradlew :server:bootJar`
-- Imagem Docker de dev: `./gradlew :server:jibDev` (gera `ledger-server:dev` e carrega no daemon local)
+- Imagem Docker de dev: `./gradlew :server:jibDev -PviteModo=development` (gera `ledger-server:dev` e carrega no daemon local)
 - Imagem Docker de prod: `./gradlew :server:jibProd -PjibRegistro=ghcr.io/brunorsch` (publica no registry)
-- Tar das imagens (sem Docker local): `./gradlew :server:jibDevTar` e `./gradlew :server:jibProdTar`
+- Tar das imagens (sem Docker local): `./gradlew :server:jibDevTar -PviteModo=development` e `./gradlew :server:jibProdTar`
 - Stack em Docker (dev): `docker compose -f compose.docker.yml up -d` (app + postgres próprios, app em http://localhost:9100)
-- Stack de produção: `docker compose -f compose.prod.yml up -d`, com `DB_URL`, `DB_USER` e `DB_PASSWORD` no ambiente
+- Stack de produção: `docker compose -f compose.prod.yml up -d`, com `DB_URL`, `DB_USER` e `DB_PASSWORD` no arquivo `.env` local (não versionado)
 
 ## Imagens Docker
 
@@ -76,6 +76,7 @@ docker compose -f compose.docker.yml up -d
 ## Frontend
 
 - React com TypeScript estrito e pnpm.
+- A config do Firebase é embutida no build: `web/.env` (dev, local) e `web/.env.production` (prod, não versionado). `jibProd`/`bootJar` usam o modo production automaticamente; `jibDev` exige `-PviteModo=development`.
 - Não faz conta de dinheiro: recebe strings da API e só formata para exibição em BRL.
 - Sem testes de frontend por enquanto. Não instale Vitest.
 - Utilizar Tailwind para estilização.
