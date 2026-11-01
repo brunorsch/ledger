@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew :server:test *)",
+      "Bash(backlog *)",
+      "Bash(pnpm --dir web lint)",
+      "Bash(pnpm --dir web exec tsc *)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git show *)",
+      "Bash(docker compose up -d)",
+      "Bash(docker compose ps *)"
+    ],
+    "ask": [
+      "Bash(git commit *)",
+      "Bash(git push *)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./web/.env.production)",
+      "Edit(~/Documents/Obsidian/Projetos/Projetos/Ledger/**)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"${CLAUDE_PROJECT_DIR:-.}\" && backlog instructions overview 2>/dev/null || true",
+            "timeout": 30,
+            "statusMessage": "Carregando overview do Backlog.md"
+          }
+        ]
+      }
+    ]
+  }
+}

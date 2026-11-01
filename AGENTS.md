@@ -2,7 +2,7 @@
 
 ## Contexto
 
-App web de controle financeiro pessoal, centrado no mês. Substitui uma planilha. As tasks vivem no Backlog.md, no vault de planejamento (Obsidian), e são consultadas por `<como acessar: integração/MCP/caminho>`. Os documentos de requisitos são do domain expert: nunca os altere.
+App web de controle financeiro pessoal, centrado no mês. Substitui uma planilha. As tasks vivem no Backlog.md, no diretório `backlog/` deste repositório, e são consultadas pela CLI `backlog`. Os documentos de requisitos ficam no vault de planejamento (Obsidian), em `~/Documents/Obsidian/Projetos/Projetos/Ledger/`, e são do domain expert: nunca os altere.
 
 ## Estrutura
 
@@ -10,7 +10,7 @@ App web de controle financeiro pessoal, centrado no mês. Substitui uma planilha
 ledger/
 ├── web/          # React + Vite + TypeScript (pnpm)
 ├── server/      # Spring Boot, Kotlin, Spring Data JDBC, PostgreSQL, Flyway
-├── compose.yaml  # PostgreSQL local (porta 65432)
+├── compose.yml   # PostgreSQL local (porta 65432)
 └── settings.gradle.kts, build.gradle.kts, gradlew
 ```
 
@@ -55,9 +55,9 @@ docker compose -f compose.docker.yml up -d
 - Código limpo, legível por humanos e sem abstração especulativa. Faça só o que a task pede.
 - O código limpo também deve ser considerado para testes. Evitando duplicações, usando nomes claros, setup/teardown, etc.
 - Domínio puro: o cálculo do sumário e da distribuição das sobras não depende do Spring.
-- Dinheiro: tipo `Money` (value class sobre `BigDecimal`, escala 2), `NUMERIC(14,2)` no banco. Nunca `Double` ou `Float`. Um único modo de arredondamento, aplicado no domínio (o banco não arredonda). A API envia e recebe valores como string. Reservas = restante − essenciais − lazer.
+- Dinheiro: tipo `Dinheiro` (value class sobre `BigDecimal`, escala 2), `NUMERIC(14,2)` no banco. Nunca `Double` ou `Float`. Um único modo de arredondamento, aplicado no domínio (o banco não arredonda). A API envia e recebe valores como string. Reservas = restante − essenciais − lazer.
 - Persistência: Spring Data JDBC, sem JPA/Hibernate. Domínio imutável (`data class` e `copy`). Agregados pequenos, com referência entre agregados por id (`AggregateReference`). Telas de leitura usam SQL ou projeção, sem montar agregados.
-- Schema só por migração Flyway em `backend/src/main/resources/db/migration` (`V<n>__descricao.sql`). Nunca edite uma migração já aplicada: crie outra.
+- Schema só por migração Flyway em `server/src/main/resources/db/migration` (`V<n>__descricao.sql`). Nunca edite uma migração já aplicada: crie outra.
 - Toda tabela de dados do usuário tem `usuario_id`.
 - IDs internos de banco são `bigint` (identity) e nunca saem do backend. Entidades expostas ao front têm `id_publico` UUID, único e gerado pela aplicação, usado em rotas e payloads da API; chaves estrangeiras referenciam o id interno.
 - O snapshot de parâmetros de cada mês tem `versao_esquema`.
