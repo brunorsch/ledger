@@ -2,11 +2,13 @@ package br.dev.brunorsch.ledger.server
 
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.jdbc.datasource.DriverManagerDataSource
 
 @SpringBootTest
 class MigracoesPostgresTest : SuportePostgres() {
@@ -196,6 +198,24 @@ class MigracoesPostgresTest : SuportePostgres() {
 	}
 
 	@Test
+	fun `ajuste da sequencia de usuarios preserva os dados de banco ja em uso`() {
+		val banco = bancoNovo("sequencia_usuarios")
+		flyway(banco, alvo = "9").migrate()
+		banco.update("INSERT INTO usuarios (id, sujeito_provedor) OVERRIDING SYSTEM VALUE VALUES (2, 'uid-2'), (3, 'uid-3')")
+		val usuariosAntes = banco.queryForList("SELECT * FROM usuarios ORDER BY id")
+
+		flyway(banco).migrate()
+		val idGerado = banco.queryForObject(
+			"INSERT INTO usuarios (sujeito_provedor) VALUES ('uid-novo') RETURNING id",
+			Long::class.java,
+		)
+
+		val usuariosExistentes = banco.queryForList("SELECT * FROM usuarios WHERE id <= 3 ORDER BY id")
+		assertThat(usuariosExistentes).isEqualTo(usuariosAntes)
+		assertThat(idGerado).isEqualTo(4L)
+	}
+
+	@Test
 	fun `mes com parametros_calculo sem versao_esquema viola o check`() {
 		assertThatThrownBy {
 			jdbcTemplate.update(
@@ -204,4 +224,19 @@ class MigracoesPostgresTest : SuportePostgres() {
 		}
 			.isInstanceOf(DataIntegrityViolationException::class.java)
 	}
+
+	/** Cria um database vazio no container, isolado do banco migrado pelo Spring. */
+	private fun bancoNovo(nome: String): JdbcTemplate {
+		jdbcTemplate.execute("DROP DATABASE IF EXISTS $nome")
+		jdbcTemplate.execute("CREATE DATABASE $nome")
+		val url = "jdbc:postgresql://${postgres.host}:${postgres.firstMappedPort}/$nome"
+		return JdbcTemplate(DriverManagerDataSource(url, postgres.username, postgres.password))
+	}
+
+	private fun flyway(banco: JdbcTemplate, alvo: String = "latest"): Flyway =
+		Flyway.configure()
+			.dataSource(banco.dataSource)
+			.locations("classpath:db/migration")
+			.target(alvo)
+			.load()
 }
