@@ -1,15 +1,15 @@
 ---
-id: TASK-21
+id: TASK-24
 title: Gerar imagens Docker da aplicação com Jib (dev e prod)
 status: Done
 assignee:
   - '@brunorsch'
 created_date: '2026-10-25 03:04'
-updated_date: '2026-10-25 03:09'
+updated_date: '2026-11-01 06:50'
 labels: []
 dependencies: []
 priority: medium
-ordinal: 21000
+ordinal: 24000
 ---
 
 ## Description
@@ -50,6 +50,8 @@ Verificação: sem Docker na máquina, as imagens foram validadas pelo tar (./gr
 Não executado por falta de Docker local: carregar a imagem no daemon (jibDev) e publicar no registry (jibProd). Também não houve execução do container; a validação foi estrutural (config e conteúdo das camadas).
 
 Testes: ./gradlew :server:test => 63 testes, 8 falhas de inicialização dos testes de integração com Testcontainers (sem daemon Docker na máquina, DockerClientProviderStrategy). As 55 demais passaram. Falha não relacionada à mudança, que afeta apenas o empacotamento.
+
+Renumerada de TASK-21 para TASK-24 em 2026-11-01 por colisão de ID com a task de logout (criada em outro clone e unida no merge e20d16a). O commit dab7a51 cita o ID antigo TASK-21.
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary

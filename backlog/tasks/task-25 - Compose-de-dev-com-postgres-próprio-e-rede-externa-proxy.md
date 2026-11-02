@@ -1,15 +1,15 @@
 ---
-id: TASK-22
+id: TASK-25
 title: Compose de dev com postgres próprio e rede externa proxy
 status: Done
 assignee:
   - '@brunorsch'
 created_date: '2026-10-25 03:50'
-updated_date: '2026-10-25 03:58'
+updated_date: '2026-11-01 06:50'
 labels: []
 dependencies: []
 priority: medium
-ordinal: 22000
+ordinal: 25000
 ---
 
 ## Description
@@ -42,6 +42,8 @@ O banco do app passou a vir de DB_URL/DB_USER/DB_PASSWORD no environment do comp
 A rede proxy é externa e precisa existir na máquina (docker network create proxy). O nginx alcança a aplicação em http://app:9100 pelo nome do serviço.
 
 Verificação: YAML validado (serviços postgres/app, redes default/proxy external, volume próprio) e regerado o tar da imagem de dev (server/build/jib-dev.tar): sem SPRING_PROFILES_ACTIVE, porta 9100, frontend em /app/resources/static e classes em /app/classes. Sem Docker na máquina, não foi possível subir o compose.
+
+Renumerada de TASK-22 para TASK-25 em 2026-11-01 por colisão de ID com a task de login no front (criada em outro clone e unida no merge e20d16a). O commit d11bee4 cita o ID antigo TASK-22.
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary
