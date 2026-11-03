@@ -2,7 +2,7 @@ import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { Botao, CampoTexto, CampoValor } from '@/components'
 import { ErroApi, type GastoFixoResponse } from '@/api/types'
 import { useAlterarGastoFixo, useCriarGastoFixo } from '@/api/queries'
-import { normalizarValorMonetario } from '@/format/valor'
+import { centavosDoValor, valorDosCentavos } from '@/format/valor'
 
 type FormularioGastoFixoProps = {
   gastoFixo?: GastoFixoResponse
@@ -15,7 +15,7 @@ export function FormularioGastoFixo({ gastoFixo, onSucesso, onCancelar }: Formul
   const alterar = useAlterarGastoFixo()
 
   const [descricao, setDescricao] = useState(gastoFixo?.descricao ?? '')
-  const [valor, setValor] = useState(gastoFixo ? formatarValorParaInput(gastoFixo.valorPadrao) : '')
+  const [centavos, setCentavos] = useState(gastoFixo ? centavosDoValor(gastoFixo.valorPadrao) : '')
   const [erros, setErros] = useState<{ descricao?: string; valor?: string }>({})
   const [erroGeral, setErroGeral] = useState<string | null>(null)
 
@@ -29,9 +29,8 @@ export function FormularioGastoFixo({ gastoFixo, onSucesso, onCancelar }: Formul
       proximosErros.descricao = 'Informe uma descrição.'
     }
 
-    const valorNormalizado = normalizarValorMonetario(valor)
-    if (!valorNormalizado) {
-      proximosErros.valor = 'Informe um valor maior que zero, usando vírgula ou ponto.'
+    if (!centavos) {
+      proximosErros.valor = 'Informe um valor maior que zero.'
     }
 
     setErros(proximosErros)
@@ -44,16 +43,16 @@ export function FormularioGastoFixo({ gastoFixo, onSucesso, onCancelar }: Formul
 
     if (!validar()) return
 
-    const valorNormalizado = normalizarValorMonetario(valor)!
+    const valor = valorDosCentavos(centavos)
 
     try {
       if (modo === 'editar' && gastoFixo) {
         await alterar.mutateAsync({
           id: gastoFixo.id,
-          corpo: { descricao: descricao.trim(), valorPadrao: valorNormalizado },
+          corpo: { descricao: descricao.trim(), valorPadrao: valor },
         })
       } else {
-        await criar.mutateAsync({ descricao: descricao.trim(), valorPadrao: valorNormalizado })
+        await criar.mutateAsync({ descricao: descricao.trim(), valorPadrao: valor })
       }
       onSucesso()
     } catch (erro: unknown) {
@@ -64,10 +63,6 @@ export function FormularioGastoFixo({ gastoFixo, onSucesso, onCancelar }: Formul
 
   function aoAlterarDescricao(evento: ChangeEvent<HTMLInputElement>) {
     setDescricao(evento.target.value)
-  }
-
-  function aoAlterarValor(evento: ChangeEvent<HTMLInputElement>) {
-    setValor(evento.target.value)
   }
 
   return (
@@ -83,11 +78,10 @@ export function FormularioGastoFixo({ gastoFixo, onSucesso, onCancelar }: Formul
 
       <CampoValor
         label="Valor padrão (R$)"
-        value={valor}
-        onChange={aoAlterarValor}
+        centavos={centavos}
+        onAlterar={setCentavos}
         erro={erros.valor}
         disabled={enviando}
-        placeholder="0,00"
       />
 
       {erroGeral && (
@@ -106,8 +100,4 @@ export function FormularioGastoFixo({ gastoFixo, onSucesso, onCancelar }: Formul
       </div>
     </form>
   )
-}
-
-function formatarValorParaInput(valor: string): string {
-  return valor.replace('.', ',')
 }

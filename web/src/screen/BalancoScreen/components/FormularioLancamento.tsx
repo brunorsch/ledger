@@ -2,7 +2,7 @@ import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { Botao, CampoTexto, CampoValor } from '@/components'
 import { ErroApi, type LancamentoResponse } from '@/api/types'
 import { useAlterarLancamento, useCriarLancamento } from '@/api/queries'
-import { normalizarValorMonetario } from '@/format/valor'
+import { centavosDoValor, valorDosCentavos } from '@/format/valor'
 
 type FormularioLancamentoProps = {
   mesId: string
@@ -23,7 +23,7 @@ export function FormularioLancamento({
   const alterar = useAlterarLancamento(mesId)
 
   const [descricao, setDescricao] = useState(lancamento?.descricao ?? '')
-  const [valor, setValor] = useState(lancamento ? formatarValorParaInput(lancamento.valor) : '')
+  const [centavos, setCentavos] = useState(lancamento ? centavosDoValor(lancamento.valor) : '')
   const [erros, setErros] = useState<{ descricao?: string; valor?: string }>({})
   const [erroGeral, setErroGeral] = useState<string | null>(null)
 
@@ -37,9 +37,8 @@ export function FormularioLancamento({
       proximosErros.descricao = 'Informe uma descrição.'
     }
 
-    const valorNormalizado = normalizarValorMonetario(valor)
-    if (!valorNormalizado) {
-      proximosErros.valor = 'Informe um valor maior que zero, usando vírgula ou ponto.'
+    if (!centavos) {
+      proximosErros.valor = 'Informe um valor maior que zero.'
     }
 
     setErros(proximosErros)
@@ -52,13 +51,13 @@ export function FormularioLancamento({
 
     if (!validar()) return
 
-    const valorNormalizado = normalizarValorMonetario(valor)!
+    const valor = valorDosCentavos(centavos)
 
     try {
       if (modo === 'editar' && lancamento) {
-        await alterar.mutateAsync({ id: lancamento.id, corpo: { descricao: descricao.trim(), valor: valorNormalizado } })
+        await alterar.mutateAsync({ id: lancamento.id, corpo: { descricao: descricao.trim(), valor } })
       } else {
-        await criar.mutateAsync({ tipo, descricao: descricao.trim(), valor: valorNormalizado })
+        await criar.mutateAsync({ tipo, descricao: descricao.trim(), valor })
       }
       onSucesso()
     } catch (erro: unknown) {
@@ -69,10 +68,6 @@ export function FormularioLancamento({
 
   function aoAlterarDescricao(evento: ChangeEvent<HTMLInputElement>) {
     setDescricao(evento.target.value)
-  }
-
-  function aoAlterarValor(evento: ChangeEvent<HTMLInputElement>) {
-    setValor(evento.target.value)
   }
 
   return (
@@ -88,11 +83,10 @@ export function FormularioLancamento({
 
       <CampoValor
         label="Valor (R$)"
-        value={valor}
-        onChange={aoAlterarValor}
+        centavos={centavos}
+        onAlterar={setCentavos}
         erro={erros.valor}
         disabled={enviando}
-        placeholder="0,00"
       />
 
       {erroGeral && (
@@ -111,8 +105,4 @@ export function FormularioLancamento({
       </div>
     </form>
   )
-}
-
-function formatarValorParaInput(valor: string): string {
-  return valor.replace('.', ',')
 }

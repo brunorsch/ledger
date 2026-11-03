@@ -1,13 +1,16 @@
-export function normalizarValorMonetario(valor: string): string | null {
-  const limpo = valor.trim().replace(/\./g, '').replace(',', '.')
+// Centavos são uma string só de dígitos, sem zeros à esquerda: "" é zero e "1250" é R$ 12,50.
+// As conversões usam só operações de string para não passar por ponto flutuante.
 
-  if (!/^\d+(\.\d{1,2})?$/.test(limpo)) return null
+export function extrairCentavos(texto: string): string {
+  return texto.replace(/\D/g, '').replace(/^0+/, '')
+}
 
-  const numero = Number(limpo)
-  if (Number.isNaN(numero) || numero <= 0) return null
+export function centavosDoValor(valor: string): string {
+  const [inteiro, decimal = ''] = valor.split('.')
+  return extrairCentavos(inteiro + decimal.padEnd(2, '0'))
+}
 
-  const [inteiro, decimal = ''] = limpo.split('.')
-  const decimalAjustado = decimal.padEnd(2, '0')
-
-  return `${inteiro}.${decimalAjustado}`
+export function valorDosCentavos(centavos: string): string {
+  const digitos = centavos.padStart(3, '0')
+  return `${digitos.slice(0, -2)}.${digitos.slice(-2)}`
 }

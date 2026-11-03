@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { ErroApi } from '@/api/types'
 import { useLancamentos, useMes, useSumario, useUltimoMes } from '@/api/queries'
 import { Botao, Modal } from '@/components'
+import { centavosDoValor } from '@/format/valor'
 import { Header } from './components/Header'
 import { TelaCarregando } from './components/TelaCarregando'
 import { TelaErro } from './components/TelaErro'
@@ -51,16 +52,16 @@ export default function BalancoScreen() {
       return {
         essenciais: formatarPercentual(ultimoMes.parametrosCalculo.percentuais.essenciais),
         lazer: formatarPercentual(ultimoMes.parametrosCalculo.percentuais.lazer),
-        tetoEssenciais: formatarValorParaInput(ultimoMes.parametrosCalculo.tetos.essenciais),
-        tetoLazer: formatarValorParaInput(ultimoMes.parametrosCalculo.tetos.lazer),
+        tetoEssenciais: centavosDoValor(ultimoMes.parametrosCalculo.tetos.essenciais),
+        tetoLazer: centavosDoValor(ultimoMes.parametrosCalculo.tetos.lazer),
       }
     }
 
     return {
       essenciais: '50.0',
       lazer: '30.0',
-      tetoEssenciais: '0,00',
-      tetoLazer: '0,00',
+      tetoEssenciais: '',
+      tetoLazer: '',
     }
   }, [ultimoMes])
 
@@ -164,8 +165,4 @@ export default function BalancoScreen() {
 
 function formatarPercentual(fração: number): string {
   return (fração * 100).toFixed(1)
-}
-
-function formatarValorParaInput(valor: string): string {
-  return valor.replace('.', ',')
 }

@@ -2,6 +2,7 @@ import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { Botao, CampoTexto, CampoValor } from '@/components'
 import { ErroApi } from '@/api/types'
 import { useCriarMes } from '@/api/queries'
+import { valorDosCentavos } from '@/format/valor'
 
 const VERSAO_ESQUEMA_PADRAO = 1
 
@@ -15,8 +16,6 @@ type ValoresIniciais = {
 type ErrosFormulario = {
   essenciais?: string
   lazer?: string
-  tetoEssenciais?: string
-  tetoLazer?: string
 }
 
 type FormularioCriarMesProps = {
@@ -78,16 +77,6 @@ export function FormularioCriarMes({
       }
     }
 
-    const tetoEssenciaisNormalizado = normalizarValorMonetarioZero(tetoEssenciais)
-    if (tetoEssenciaisNormalizado === null) {
-      proximosErros.tetoEssenciais = 'Informe um valor válido.'
-    }
-
-    const tetoLazerNormalizado = normalizarValorMonetarioZero(tetoLazer)
-    if (tetoLazerNormalizado === null) {
-      proximosErros.tetoLazer = 'Informe um valor válido.'
-    }
-
     setErros(proximosErros)
     return Object.keys(proximosErros).length === 0
   }
@@ -111,8 +100,8 @@ export function FormularioCriarMes({
             lazer: percentualLazer / 100,
           },
           tetos: {
-            essenciais: normalizarValorMonetarioZero(tetoEssenciais)!,
-            lazer: normalizarValorMonetarioZero(tetoLazer)!,
+            essenciais: valorDosCentavos(tetoEssenciais),
+            lazer: valorDosCentavos(tetoLazer),
           },
         },
         alternarInvestir,
@@ -131,14 +120,6 @@ export function FormularioCriarMes({
 
   function aoAlterarLazer(evento: ChangeEvent<HTMLInputElement>) {
     setLazer(evento.target.value)
-  }
-
-  function aoAlterarTetoEssenciais(evento: ChangeEvent<HTMLInputElement>) {
-    setTetoEssenciais(evento.target.value)
-  }
-
-  function aoAlterarTetoLazer(evento: ChangeEvent<HTMLInputElement>) {
-    setTetoLazer(evento.target.value)
   }
 
   return (
@@ -172,20 +153,16 @@ export function FormularioCriarMes({
       <div className="grid grid-cols-2 gap-4">
         <CampoValor
           label="Teto essenciais (R$)"
-          value={tetoEssenciais}
-          onChange={aoAlterarTetoEssenciais}
-          erro={erros.tetoEssenciais}
+          centavos={tetoEssenciais}
+          onAlterar={setTetoEssenciais}
           disabled={criar.isPending}
-          placeholder="0,00"
         />
 
         <CampoValor
           label="Teto lazer (R$)"
-          value={tetoLazer}
-          onChange={aoAlterarTetoLazer}
-          erro={erros.tetoLazer}
+          centavos={tetoLazer}
+          onAlterar={setTetoLazer}
           disabled={criar.isPending}
-          placeholder="0,00"
         />
       </div>
 
@@ -213,15 +190,4 @@ function parsearPercentual(valor: string): number | null {
   const numero = Number(limpo)
   if (Number.isNaN(numero) || numero < 0 || numero > 100) return null
   return numero
-}
-
-function normalizarValorMonetarioZero(valor: string): string | null {
-  const limpo = valor.trim().replace(/\./g, '').replace(',', '.')
-
-  if (!/^\d+(\.\d{1,2})?$/.test(limpo)) return null
-
-  const [inteiro, decimal = ''] = limpo.split('.')
-  const decimalAjustado = decimal.padEnd(2, '0')
-
-  return `${inteiro}.${decimalAjustado}`
 }
